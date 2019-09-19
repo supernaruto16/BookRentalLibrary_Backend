@@ -26,7 +26,7 @@ class UserRegistration(Resource):
             access_token = create_access_token(identity=data['username'])
             refresh_token = create_refresh_token(identity=data['username'])
             return {
-                'message': 'User was created',
+                'message': 'Success',
                 'access_token': access_token,
                 'refresh_token': refresh_token
             }
@@ -48,7 +48,7 @@ class UserLogin(Resource):
             access_token = create_access_token(identity=data['username'])
             refresh_token = create_refresh_token(identity=data['username'])
             return {
-                'message': 'Logged in',
+                'message': 'Success',
                 'access_token': access_token,
                 'refresh_token': refresh_token
             }
@@ -98,8 +98,11 @@ class AllUsers(Resource):
 class SecretResource(Resource):
     @jwt_required
     def get(self):
-        current_user = get_jwt_identity()
-        print(current_user)
+        try:
+            current_user = get_jwt_identity()
+            print(current_user)
+        except:
+            return {'message' : 'Access token is revoked'}, 401
         return {
             'answer': 42
         }
