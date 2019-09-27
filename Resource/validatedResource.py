@@ -1,25 +1,27 @@
 from  flask_restplus import Resource, reqparse
-from Model.userModel import userModel
+from Model.models import user_details
 from Model.revokedTokenModel import revokedTokenModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 import requests
 import json
 
 parse = reqparse.RequestParser();
-parse.add_argument('fullname', help="This field cannot be blank", required=True)
-parse.add_argument('username', help="This field cannot be blank", required=True)
+parse.add_argument('firstname', help="This field cannot be blank", required=True)
+parse.add_argument('lastname', help="This field cannot be blank", required=True)
+parse.add_argument('email', help="This field cannot be blank", required=True)
 parse.add_argument('password', help="This field cannot be blank", required=True)
 
 
 class UserRegistration(Resource):
     def post(self):
         data = parse.parse_args()
-        if userModel.find_by_username(data['username']):
+        if user_details.find_by_email(data['email']):
             return {'message': 'User already exists'}
-        new_user = userModel(
-            username = data['username'],
-            fullname = data['fullname'],
-            password = userModel.generate_hash(data['password'])
+        new_user = user_details(
+            firstname = data['firstname'],
+            lastname = data['lastname'],
+            email = data['email'],
+            password = user_details.generate_hash(data['password'])
         )
         try:
             new_user.save_to_db()
@@ -34,19 +36,19 @@ class UserRegistration(Resource):
             return {'message': 'Something went wrong'}, 500
 
 loginParse = reqparse.RequestParser();
-loginParse.add_argument('username', help="This field cannot be blank", required=True)
+loginParse.add_argument('email', help="This field cannot be blank", required=True)
 loginParse.add_argument('password', help="This field cannot be blank", required=True)
 
 class UserLogin(Resource):
     def post(self):
         data = loginParse.parse_args()
-        current_user = userModel.find_by_username(data['username'])
+        current_user = user_details.find_by_email(data['email'])
         if not current_user:
             return {'message': 'Not exist'}
 
-        if userModel.verify_hash(data['password'], current_user.password):
-            access_token = create_access_token(identity=data['username'])
-            refresh_token = create_refresh_token(identity=data['username'])
+        if user_details.verify_hash(data['password'], current_user.password):
+            access_token = create_access_token(identity=data['email'])
+            refresh_token = create_refresh_token(identity=data['email'])
             return {
                 'message': 'Success',
                 'access_token': access_token,
@@ -90,10 +92,10 @@ class TokenRefresh(Resource):
 
 class AllUsers(Resource):
     def get(self):
-        return userModel.return_all()
+        return user_details.return_all()
 
     def delete(self):
-        return userModel.delete_all()
+        return user_details.delete_all()
 
 class SecretResource(Resource):
     @jwt_required

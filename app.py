@@ -4,6 +4,8 @@ from flask_cors import CORS
 from DB_Connection.db import init
 from flask_jwt_extended import JWTManager
 from Model.revokedTokenModel import revokedTokenModel
+import json
+
 def factory():
     app = Flask(__name__)
     app.url_map.strict_slashes = False
@@ -13,7 +15,10 @@ def factory():
 
 app = factory()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:truong619@localhost/book'
+with open('./config.json') as json_data_file:
+    data = json.load(json_data_file)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://' + data["user"] + ':' + data["password"] + '@localhost/'+ data["database"]
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #app.config['SQLALCHEMY_ECHO'] = True
 app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
@@ -42,8 +47,10 @@ ns = api.namespace('api', description='BookRental API')
 from DB_Connection.db import sql_db
 
 db = sql_db()
+
 @app.before_first_request
 def create_tables():
+    print(db)
     db.create_all()
 
 from Resource import validatedResource
