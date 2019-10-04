@@ -8,6 +8,7 @@ Flask-Cors==3.0.8
 Flask-JWT-Extended==3.23.0
 flask-restplus==0.13.0
 Flask-SQLAlchemy==2.4.0
+gunicorn==19.9.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10.1
