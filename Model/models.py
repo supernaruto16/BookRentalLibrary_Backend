@@ -71,6 +71,12 @@ class borrow_details(db.Model):
     address = db.Column(db.String(500))
     status = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
 
+class book_categories(db.Model):
+    __tablename__ = 'book_categories'
+
+    category_id = db.Column(db.Integer, db.ForeignKey('category_details.category_id'), primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('book_details.ISBN'), primary_key=True)
+
 
 class warning_details(db.Model):
     __tablename__ = 'warning_details'
@@ -84,7 +90,7 @@ class category_details(db.Model):
 
     category_id = db.Column(db.Integer, primary_key=True)
     category_name = db.Column(db.String(120))
-    book_details = db.relationship("book_details", backref="category_details")
+    book_categories = db.relationship('book_categories', backref='category_details')
 
 class user_type_details(db.Model):
     __tablename__ = 'user_type_details'
@@ -123,12 +129,12 @@ class book_details(db.Model):
     ISBN = db.Column(db.Integer, primary_key=True)
     book_title = db.Column(db.String(200))
     publication_year = db.Column(db.DateTime)
-    category_id = db.Column(db.Integer, db.ForeignKey("category_details.category_id"))
     book_description = db.Column(db.TEXT)
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
     ratings_details = db.relationship("ratings_details", backref="book_details")
     book_warehouse = db.relationship("book_warehouse", backref="book_details")
+    book_categories = db.relationship('book_categories', backref='book_details')
 
 class author_details(db.Model):
     __tablename__ = 'author_details'
