@@ -76,7 +76,7 @@ class warning_details(db.Model):
     __tablename__ = 'warning_details'
 
     warning_id = db.Column(db.Integer, primary_key=True)
-    warning_text = db.Column(db.String(64000))
+    warning_text = db.Column(db.TEXT)
     borrow_details = db.relationship("borrow_details", backref="warning_details")
 
 class category_details(db.Model):
@@ -115,7 +115,7 @@ class ratings_details(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user_details.user_id'), primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('book_details.ISBN'), primary_key=True)
     rating_num = db.Column(db.Integer)
-    rating_comment = db.Column(db.String(64000))
+    rating_comment = db.Column(db.TEXT)
 
 class book_details(db.Model):
     __tablename__ = 'book_details'
@@ -124,7 +124,7 @@ class book_details(db.Model):
     book_title = db.Column(db.String(200))
     publication_year = db.Column(db.DateTime)
     category_id = db.Column(db.Integer, db.ForeignKey("category_details.category_id"))
-    book_description = db.Column(db.String(64000))
+    book_description = db.Column(db.TEXT)
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
     ratings_details = db.relationship("ratings_details", backref="book_details")
