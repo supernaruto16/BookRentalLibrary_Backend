@@ -15,8 +15,8 @@ class user_details(db.Model):
     user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'))
     cash = db.Column(db.Integer)
     borrow_details = db.relationship("borrow_details", backref="user_details")
-    owner = db.relationship("book_warehouse", backref="owner")
-    validator = db.relationship("book_warehouse", backref="validator")
+    owner = db.relationship("book_warehouse", backref="user_details")
+    validator = db.relationship("book_warehouse", backref="user_details")
     ratings_details = db.relationship("ratings_details", backref="user_details")
 
     def save_to_db(self):
@@ -25,7 +25,7 @@ class user_details(db.Model):
 
     @classmethod
     def find_by_email(cls, email):
-        return cls.query.filter_by(email = email).first()
+        return cls.query.filter_by(email=email).first()
 
     @classmethod
     def return_all(cls):
@@ -34,8 +34,8 @@ class user_details(db.Model):
                 'email': x.username,
                 'password': x.password,
                 'first_name': x.first_name,
-                'last_name' : x.last_name,
-                'cash' : 0
+                'last_name': x.last_name,
+                'cash': 0
             }
 
         return {'users': list(map(lambda x: to_json(x), user_details.query.all()))}
@@ -58,6 +58,7 @@ class user_details(db.Model):
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
 
+
 class borrow_details(db.Model):
     __tablename__ = 'borrow_details'
 
@@ -70,6 +71,7 @@ class borrow_details(db.Model):
     warning_id = db.Column(db.Integer)
     address = db.Column(db.String(500))
     status = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
+
 
 class book_categories(db.Model):
     __tablename__ = 'book_categories'
@@ -85,12 +87,14 @@ class warning_details(db.Model):
     warning_text = db.Column(db.TEXT)
     borrow_details = db.relationship("borrow_details", backref="warning_details")
 
+
 class category_details(db.Model):
     __tablename__ = 'category_details'
 
     category_id = db.Column(db.Integer, primary_key=True)
     category_name = db.Column(db.String(120))
     book_categories = db.relationship('book_categories', backref='category_details')
+
 
 class user_type_details(db.Model):
     __tablename__ = 'user_type_details'
@@ -123,6 +127,7 @@ class ratings_details(db.Model):
     rating_num = db.Column(db.Integer)
     rating_comment = db.Column(db.TEXT)
 
+
 class book_details(db.Model):
     __tablename__ = 'book_details'
 
@@ -136,21 +141,10 @@ class book_details(db.Model):
     book_warehouse = db.relationship("book_warehouse", backref="book_details")
     book_categories = db.relationship('book_categories', backref='book_details')
 
+
 class author_details(db.Model):
     __tablename__ = 'author_details'
 
     author_id = db.Column(db.Integer, primary_key=True)
     author_name = db.Column(db.String(120))
     book_details = db.relationship("book_details", backref="author_details")
-
-
-
-
-
-
-
-
-
-
-
-
