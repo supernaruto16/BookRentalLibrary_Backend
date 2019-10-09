@@ -19,8 +19,8 @@ class UserRegistration(Resource):
         if user_details.find_by_email(data['email']):
             return {'message': 'User already exists'}
         new_user = user_details(
-            firstname=data['firstname'],
-            lastname=data['lastname'],
+            first_name=data['firstname'],
+            last_name=data['lastname'],
             email=data['email'],
             password=user_details.generate_hash(data['password'], ),
             user_type_id=3,
@@ -28,13 +28,13 @@ class UserRegistration(Resource):
         )
         try:
             new_user.save_to_db()
-            access_token = create_access_token(identity=data['username'])
-            refresh_token = create_refresh_token(identity=data['username'])
+            access_token = create_access_token(identity=data['email'])
+            refresh_token = create_refresh_token(identity=data['email'])
             return {
                 'message': 'Success',
                 'access_token': access_token,
                 'refresh_token': refresh_token
-            }
+                }
         except:
             return {'message': 'Something went wrong'}, 500
 

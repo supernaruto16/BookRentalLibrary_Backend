@@ -15,8 +15,8 @@ class user_details(db.Model):
     user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'))
     cash = db.Column(db.Integer)
     borrow_details = db.relationship("borrow_details", backref="user_details")
-    owner = db.relationship("book_warehouse", backref="user_details")
-    validator = db.relationship("book_warehouse", backref="user_details")
+    owner = db.relationship("book_warehouse", backref="owner_details", foreign_keys = 'book_warehouse.owner_id')
+    validator = db.relationship("book_warehouse", backref="validator_details", foreign_keys = 'book_warehouse.validator')
     ratings_details = db.relationship("ratings_details", backref="user_details")
 
     def save_to_db(self):
