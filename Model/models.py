@@ -4,7 +4,7 @@ from passlib.hash import pbkdf2_sha256 as sha256
 db = sql_db()
 
 
-class user_details(db.Model):
+class UserDetails(db.Model):
     __tablename__ = 'user_details'
 
     user_id = db.Column(db.Integer, primary_key=True)
@@ -38,7 +38,7 @@ class user_details(db.Model):
                 'cash' : 0
             }
 
-        return {'users': list(map(lambda x: to_json(x), user_details.query.all()))}
+        return {'users': list(map(lambda x: to_json(x), UserDetails.query.all()))}
 
     @classmethod
     def delete_all(cls):
@@ -58,7 +58,8 @@ class user_details(db.Model):
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
 
-class borrow_details(db.Model):
+
+class BorrowDetails(db.Model):
     __tablename__ = 'borrow_details'
 
     borrow_id = db.Column(db.Integer, primary_key=True)
@@ -72,21 +73,26 @@ class borrow_details(db.Model):
     status = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
 
 
-class warning_details(db.Model):
+class WarningDetails(db.Model):
     __tablename__ = 'warning_details'
 
     warning_id = db.Column(db.Integer, primary_key=True)
     warning_text = db.Column(db.String(64000))
     borrow_details = db.relationship("borrow_details", backref="warning_details")
 
-class category_details(db.Model):
+
+class CategoryDetails(db.Model):
     __tablename__ = 'category_details'
 
     category_id = db.Column(db.Integer, primary_key=True)
     category_name = db.Column(db.String(120))
-    book_details = db.relationship("book_details", backref="category_details")
 
-class user_type_details(db.Model):
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+
+class UserTypeDetails(db.Model):
     __tablename__ = 'user_type_details'
 
     user_type_id = db.Column(db.Integer, primary_key=True)
@@ -94,11 +100,11 @@ class user_type_details(db.Model):
     user_details = db.relationship("user_details", backref="user_type_details")
 
 
-class book_warehouse(db.Model):
+class BookWarehouse(db.Model):
     __tablename__ = 'book_warehouse'
 
     warehouse_id = db.Column(db.Integer, primary_key=True)
-    book_id = db.Column(db.Integer, db.ForeignKey('book_details.ISBN'))
+    book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'))
     owner_id = db.Column(db.Integer, db.ForeignKey('user_details.user_id'))
     is_validate = db.Column(db.Integer)
     status = db.Column(db.Integer)
@@ -109,34 +115,72 @@ class book_warehouse(db.Model):
     borrow_details = db.relationship("borrow_details", backref="book_warehouse")
 
 
-class ratings_details(db.Model):
-    __tablename__ = 'ratings_details'
+class RatingDetails(db.Model):
+    __tablename__ = 'rating_details'
 
     user_id = db.Column(db.Integer, db.ForeignKey('user_details.user_id'), primary_key=True)
-    book_id = db.Column(db.Integer, db.ForeignKey('book_details.ISBN'), primary_key=True)
+    book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'), primary_key=True)
     rating_num = db.Column(db.Integer)
     rating_comment = db.Column(db.String(64000))
 
-class book_details(db.Model):
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+
+class BookDetails(db.Model):
     __tablename__ = 'book_details'
 
-    ISBN = db.Column(db.Integer, primary_key=True)
+    ISBN = db.Column(db.String(32), primary_key=True)
     book_title = db.Column(db.String(200))
     publication_year = db.Column(db.DateTime)
-    category_id = db.Column(db.Integer, db.ForeignKey("category_details.category_id"))
     book_description = db.Column(db.String(64000))
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
     ratings_details = db.relationship("ratings_details", backref="book_details")
     book_warehouse = db.relationship("book_warehouse", backref="book_details")
 
-class author_details(db.Model):
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def find_by_title(cls, title):
+        return cls.query.filter_by(title=title).first()
+
+    @classmethod
+    def return_all(cls):
+        def to_json(x):
+            return {
+                'ISBN': x.ISBN,
+                'book_title': x.book_title,
+                'category_id': x.category_id
+            }
+
+        return {'users': list(map(lambda x: to_json(x), BookDetails.query.all()))}
+
+
+class BookCategories(db.Model):
+    __tablename__ = 'book_categories'
+
+    book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'), primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('category_details.category_id'), primary_key=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+
+class AuthorDetails(db.Model):
     __tablename__ = 'author_details'
 
     author_id = db.Column(db.Integer, primary_key=True)
     author_name = db.Column(db.String(120))
     book_details = db.relationship("book_details", backref="author_details")
 
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
 
 
 
