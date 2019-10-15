@@ -141,7 +141,7 @@ class BookDetails(db.Model):
     book_warehouse = db.relationship("BookWarehouse", backref="book_details")
 
     def save_to_db(self):
-        if self.find_by_isbn(isbn=self.ISBN):
+        if not self.find_by_isbn(isbn=self.ISBN):
             db.session.add(self)
             db.session.commit()
             return True
@@ -182,7 +182,7 @@ class BookCategories(db.Model):
 
     @classmethod
     def check_dup(cls, book_id, category_id):
-        return cls.query.filter_by(book_id, category_id).first()
+        return cls.query.filter_by(book_id=book_id, category_id=category_id).first()
 
 
 class AuthorDetails(db.Model):

@@ -58,7 +58,7 @@ def create_tables():
     db.create_all()
     import_data = ImportData(os.getcwd() + '/Model/data')
     import_data.import_authors()
-    import_data.import_book_categories()
+    import_data.import_categories()
     import_data.import_books()
     import_data.import_book_categories()
 

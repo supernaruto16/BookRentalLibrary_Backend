@@ -18,7 +18,7 @@ class ImportData:
             total = len(lines)
             for i in range(len(lines)):
                 data = json.loads(lines[i])
-                print(f'[+] author [{i}/{total}]')
+                print(f'[+] author [{i+1}/{total}]')
                 author = AuthorDetails(author_name=data['name'],
                                        author_id=data['id'])
                 author.save_to_db()
@@ -29,7 +29,7 @@ class ImportData:
             total = len(lines)
             for i in range(len(lines)):
                 data = json.loads(lines[i])
-                print(f'[+] book [{i}/{total}]')
+                print(f'[+] book [{i+1}/{total}]')
                 book = BookDetails(ISBN=data['isbn13'],
                                    book_title=data['title'],
                                    publication_year=data['original_publication_year'],
@@ -44,7 +44,7 @@ class ImportData:
             total = len(lines)
             for i in range(len(lines)):
                 data = json.loads(lines[i])
-                print(f'[+] category [{i}/{total}]')
+                print(f'[+] category [{i+1}/{total}]')
                 category = CategoryDetails(category_id=data['id'],
                                            category_name=data['name'])
                 category.save_to_db()
@@ -56,7 +56,7 @@ class ImportData:
             self.book_details = BookDetails()
             for i in range(len(lines)):
                 data = json.loads(lines[i])
-                print(f"[+] book_category [{i} / {total}]")
+                print(f"[+] book_category [{i+1} / {total}]")
                 for category_id in data['categories_id']:
                     book_id = data['isbn']
                     if self.book_details.find_by_isbn(book_id):
@@ -70,7 +70,7 @@ class ImportData:
     #     book_details = BookDetails()
     #     for i in range(len(lines)):
     #         data = json.loads(lines[i])
-    #         print(f'[+] rating [{i}/{total}]')
+    #         print(f'[+] rating [{i+1}/{total}]')
     #         rating_detail = RatingDetails(user_id=data['user_id'],
     #                                       book_id=data['isbn13'],
     #                                       rating_num=data['rating'])
