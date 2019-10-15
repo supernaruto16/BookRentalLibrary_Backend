@@ -14,10 +14,10 @@ class UserDetails(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'))
     cash = db.Column(db.Integer)
-    borrow_details = db.relationship("borrow_details", backref="user_details")
-    owner = db.relationship("book_warehouse", backref="owner")
-    validator = db.relationship("book_warehouse", backref="validator")
-    ratings_details = db.relationship("ratings_details", backref="user_details")
+    borrow_details = db.relationship("BorrowDetails", backref="user_details")
+    owner = db.relationship("BookWarehouse", backref="owner_details", foreign_keys='BookWarehouse.owner_id')
+    validator = db.relationship("BookWarehouse", backref="validator_details", foreign_keys='BookWarehouse.validator')
+    ratings_details = db.relationship("RatingDetails", backref="user_details")
 
     def save_to_db(self):
         db.session.add(self)
@@ -78,7 +78,7 @@ class WarningDetails(db.Model):
 
     warning_id = db.Column(db.Integer, primary_key=True)
     warning_text = db.Column(db.String(64000))
-    borrow_details = db.relationship("borrow_details", backref="warning_details")
+    borrow_details = db.relationship("BorrowDetails", backref="warning_details")
 
 
 class CategoryDetails(db.Model):
@@ -97,7 +97,7 @@ class UserTypeDetails(db.Model):
 
     user_type_id = db.Column(db.Integer, primary_key=True)
     user_type_name = db.Column(db.String(120))
-    user_details = db.relationship("user_details", backref="user_type_details")
+    user_details = db.relationship("UserDetails", backref="user_type_details")
 
 
 class BookWarehouse(db.Model):
@@ -112,7 +112,7 @@ class BookWarehouse(db.Model):
     price = db.Column(db.Integer)
     address = db.Column(db.String(200))
     time_upload = db.Column(db.DateTime)
-    borrow_details = db.relationship("borrow_details", backref="book_warehouse")
+    borrow_details = db.relationship("BorrowDetails", backref="book_warehouse")
 
 
 class RatingDetails(db.Model):
@@ -137,8 +137,8 @@ class BookDetails(db.Model):
     book_description = db.Column(db.String(64000))
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
-    ratings_details = db.relationship("ratings_details", backref="book_details")
-    book_warehouse = db.relationship("book_warehouse", backref="book_details")
+    ratings_details = db.relationship("RatingDetails", backref="book_details")
+    book_warehouse = db.relationship("BookWarehouse", backref="book_details")
 
     def save_to_db(self):
         db.session.add(self)
@@ -176,7 +176,7 @@ class AuthorDetails(db.Model):
 
     author_id = db.Column(db.Integer, primary_key=True)
     author_name = db.Column(db.String(120))
-    book_details = db.relationship("book_details", backref="author_details")
+    book_details = db.relationship("BookDetails", backref="author_details")
 
     def save_to_db(self):
         db.session.add(self)

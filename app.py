@@ -6,7 +6,7 @@ from flask_jwt_extended import JWTManager
 from Model.RevokedTokenModel import RevokedTokenModel
 import json
 from Resource import validatedResource
-
+from Model.import_data import import_data
 
 def factory():
     app = Flask(__name__)
@@ -54,6 +54,7 @@ db = sql_db()
 def create_tables():
     print(db)
     db.create_all()
+    import_data()
 
 
 ns.add_resource(validatedResource.UserRegistration, '/registration')

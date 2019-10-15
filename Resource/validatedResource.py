@@ -40,7 +40,7 @@ class UserRegistration(Resource):
             return {'message': 'Something went wrong'}, 500
 
 
-loginParse = reqparse.RequestParser();
+loginParse = reqparse.RequestParser()
 loginParse.add_argument('email', help="This field cannot be blank", required=True)
 loginParse.add_argument('password', help="This field cannot be blank", required=True)
 
