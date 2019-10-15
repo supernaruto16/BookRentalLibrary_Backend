@@ -39,6 +39,7 @@ def get_normalize_author_id(base_id):
 
 pp = pprint.PrettyPrinter(indent=4)
 for filename in os.listdir(xml_books_folder):
+    print filename, 
     with open(xml_books_folder + filename, 'r') as xml_file:
         xmldata = xmltodict.parse(xml_file)
         bookdata = xmldata['GoodreadsResponse']['book']
@@ -52,9 +53,14 @@ for filename in os.listdir(xml_books_folder):
         if not res_book['isbn13'] or len(res_book['isbn13']) <= 0:
             continue
         
+        # print res_book['original_publication_year']
         if isinstance(res_book['original_publication_year'], dict):
             if '#text' in res_book['original_publication_year']:
                 res_book['original_publication_year'] = res_book['original_publication_year']['#text']
+            else:
+                continue
+        print res_book['original_publication_year'], 
+
         if res_book['rating_dist']:
             res_book['rating_dist'] = process_rating_dist(res_book['rating_dist'])
 
@@ -73,7 +79,7 @@ for filename in os.listdir(xml_books_folder):
 
         res_book['categories'] = category_details[res_book['isbn13']]
 
-        pp.pprint(res_book['id'])
+        print res_book['id']
         # pp.pprint(export_author_data)
         # pp.pprint(bookdata['authors']['author'][0])
         export_book_data.append(res_book)

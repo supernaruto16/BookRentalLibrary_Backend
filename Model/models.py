@@ -133,7 +133,7 @@ class BookDetails(db.Model):
 
     ISBN = db.Column(db.String(32), primary_key=True)
     book_title = db.Column(db.String(200))
-    publication_year = db.Column(db.DateTime)
+    publication_year = db.Column(db.Integer)
     book_description = db.Column(db.String(64000))
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
@@ -141,12 +141,19 @@ class BookDetails(db.Model):
     book_warehouse = db.relationship("BookWarehouse", backref="book_details")
 
     def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
+        if self.find_by_isbn(isbn=self.ISBN):
+            db.session.add(self)
+            db.session.commit()
+            return True
+        return False
 
     @classmethod
     def find_by_title(cls, title):
-        return cls.query.filter_by(title=title).first()
+        return cls.query.filter_by(book_title=title).first()
+
+    @classmethod
+    def find_by_isbn(cls, isbn):
+        return cls.query.filter_by(ISBN=isbn).first()
 
     @classmethod
     def return_all(cls):
@@ -167,8 +174,15 @@ class BookCategories(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('category_details.category_id'), primary_key=True)
 
     def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
+        if not self.check_dup(self.book_id, self.category_id):
+            db.session.add(self)
+            db.session.commit()
+            return True
+        return False
+
+    @classmethod
+    def check_dup(cls, book_id, category_id):
+        return cls.query.filter_by(book_id, category_id).first()
 
 
 class AuthorDetails(db.Model):
