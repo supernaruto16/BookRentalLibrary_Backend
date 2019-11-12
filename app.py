@@ -45,7 +45,7 @@ def login(request):
         return
     if request.method == 'POST':
         post_data = request.get_json()
-        status, msg = UserDetails.check_login(post_data.username, post_data.password)
+        status, msg = UserDetails.check_login(post_data.get('username'), post_data.get('password'))
         return jsonify({
             'message': msg
         })
@@ -57,8 +57,8 @@ def registration(request):
         return
     if request.method == 'POST':
         post_data = request.get_json()
-        status, msg = UserDetails.add_user(post_data.username, post_data.password,
-                                           post_data.firstname, post_data.lastname)
+        status, msg = UserDetails.add_user(post_data.get('username'), post_data.get('password'),
+                                           post_data.get('firstname'), post_data.get('lastname'))
         return jsonify({
             'message': msg
         })
