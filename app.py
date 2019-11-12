@@ -8,6 +8,7 @@ import json
 from Resource import validatedResource
 from Model.import_data import ImportData
 import os
+from Model.models import UserDetails
 
 
 def factory():
@@ -36,6 +37,31 @@ jwt = JWTManager(app)
 @app.route('/')
 def helloworld():
     return "Hello"
+
+
+@app.route('/login',  methods=['GET', 'POST'])
+def login(request):
+    if request.method == 'GET':
+        return
+    if request.method == 'POST':
+        post_data = request.get_json()
+        status, msg = UserDetails.check_login(post_data.username, post_data.password)
+        return jsonify({
+            'message': msg
+        })
+
+
+@app.route('/registration', methods=['GET', 'POST'])
+def registration(request):
+    if request.method == 'GET':
+        return
+    if request.method == 'POST':
+        post_data = request.get_json()
+        status, msg = UserDetails.add_user(post_data.username, post_data.password,
+                                           post_data.firstname, post_data.lastname)
+        return jsonify({
+            'message': msg
+        })
 
 
 @jwt.token_in_blacklist_loader

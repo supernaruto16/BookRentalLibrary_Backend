@@ -8,12 +8,13 @@ class UserDetails(db.Model):
     __tablename__ = 'user_details'
 
     user_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'), nullable=False)
+    cash = db.Column(db.Integer, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'))
-    cash = db.Column(db.Integer)
     borrow_details = db.relationship("BorrowDetails", backref="user_details")
     owner = db.relationship("BookWarehouse", backref="owner_details", foreign_keys='BookWarehouse.owner_id')
     validator = db.relationship("BookWarehouse", backref="validator_details", foreign_keys='BookWarehouse.validator')
@@ -24,8 +25,37 @@ class UserDetails(db.Model):
         db.session.commit()
 
     @classmethod
-    def find_by_email(cls, email):
-        return cls.query.filter_by(email = email).first()
+    def find_by_username(cls, username):
+        return cls.query.filter_by(username=username).first()
+
+    @classmethod
+    def get_number_of_users(cls):
+        return cls.query(UserDetails).count()
+
+    @classmethod
+    def add_user(cls, username, password, first_name='', last_name=''):
+        user = UserDetails.find_by_username(username)
+        if user:
+            return False, 'User already exists'
+
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        user_id = UserDetails.get_number_of_users() + 1
+        user_type_id = 0
+        cash = 0
+
+        new_user = UserDetails(username=username, email=username, password=hashed_pw, user_id=user_id,
+                               user_type_id=user_type_id, cash=cash, first_name=first_name, last_name=last_name)
+        UserDetails.save_to_db(new_user)
+
+    @classmethod
+    def check_login(cls, username, password):
+        user = UserDetails.find_by_username(username)
+        if not user:
+            return False, 'User does not exist!'
+        if bcrypt.checkpw(password.encode('utf-8'), user.password):
+            return True, 'success'
+        else:
+            return False, 'Incorrect password!'
 
     @classmethod
     def return_all(cls):
@@ -34,8 +64,8 @@ class UserDetails(db.Model):
                 'email': x.username,
                 'password': x.password,
                 'first_name': x.first_name,
-                'last_name' : x.last_name,
-                'cash' : 0
+                'last_name': x.last_name,
+                'cash': 0
             }
 
         return {'users': list(map(lambda x: to_json(x), UserDetails.query.all()))}
@@ -49,14 +79,6 @@ class UserDetails(db.Model):
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except:
             return {'message': 'Something went wrong'}
-
-    @staticmethod
-    def generate_hash(password):
-        return sha256.hash(password)
-
-    @staticmethod
-    def verify_hash(password, hash):
-        return sha256.verify(password, hash)
 
 
 class BorrowDetails(db.Model):
