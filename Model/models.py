@@ -1,5 +1,7 @@
 from DB_Connection.db import sql_db
-from passlib.hash import pbkdf2_sha256 as sha256
+import bcrypt
+from sqlalchemy import desc, func
+
 
 db = sql_db()
 
@@ -99,7 +101,7 @@ class WarningDetails(db.Model):
     __tablename__ = 'warning_details'
 
     warning_id = db.Column(db.Integer, primary_key=True)
-    warning_text = db.Column(db.String(64000))
+    warning_text = db.Column(db.TEXT)
     borrow_details = db.relationship("BorrowDetails", backref="warning_details")
 
 
@@ -112,6 +114,23 @@ class CategoryDetails(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+
+    @classmethod
+    def to_json(cls, x):
+        return {
+            'category_id': x.category_id,
+            'category_name': x.category_name
+        }
+
+    @classmethod
+    def return_all(cls):
+        return {'data': list(map(lambda x: cls.to_json(x), CategoryDetails.query.all()))}
+
+    @classmethod
+    def popular_categories(cls, limit, page):
+        return db.session.query(
+            func.count(BookCategories.category_id).label('num_books'), CategoryDetails.category_id, CategoryDetails.category_name
+        ).join(CategoryDetails).group_by(BookCategories.category_id).order_by(desc('num_books')).limit(limit).offset((page - 1) * limit)
 
 
 class UserTypeDetails(db.Model):
@@ -143,7 +162,7 @@ class RatingDetails(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user_details.user_id'), primary_key=True)
     book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'), primary_key=True)
     rating_num = db.Column(db.Integer)
-    rating_comment = db.Column(db.String(64000))
+    rating_comment = db.Column(db.TEXT)
 
     def save_to_db(self):
         db.session.add(self)
@@ -156,7 +175,7 @@ class BookDetails(db.Model):
     ISBN = db.Column(db.String(32), primary_key=True)
     book_title = db.Column(db.String(200))
     publication_year = db.Column(db.Integer)
-    book_description = db.Column(db.String(64000))
+    book_description = db.Column(db.TEXT)
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
     ratings_details = db.relationship("RatingDetails", backref="book_details")
@@ -178,15 +197,30 @@ class BookDetails(db.Model):
         return cls.query.filter_by(ISBN=isbn).first()
 
     @classmethod
-    def return_all(cls):
-        def to_json(x):
-            return {
-                'ISBN': x.ISBN,
-                'book_title': x.book_title,
-                'category_id': x.category_id
-            }
+    def to_json(cls, x):
+        return {
+            'ISBN': x.ISBN,
+            'book_title': x.book_title,
+            'publication_year': x.publication_year,
+            'book_description': x.book_description,
+            'book_cover': x.book_cover
+        }
 
-        return {'users': list(map(lambda x: to_json(x), BookDetails.query.all()))}
+    @classmethod
+    def return_all(cls, limit, page):
+        return {'data': list(map(lambda x: cls.to_json(x), BookDetails.query.limit(limit).offset((page-1) * limit)))}
+
+    @classmethod
+    def return_new(cls, limit, page):
+        return BookDetails.query.join(AuthorDetails).order_by(desc(BookDetails.publication_year)).limit(limit).offset((page-1) * limit)
+
+    @classmethod
+    def return_by_category(cls, category_id, limit, page):
+        return BookDetails.query.join(BookCategories).join(AuthorDetails).filter(BookCategories.category_id == category_id).limit(limit).offset((page - 1) * limit)
+
+    @classmethod
+    def return_top_books(cls, limit, page):
+        return cls.return_all(limit, page)
 
 
 class BookCategories(db.Model):
@@ -218,13 +252,17 @@ class AuthorDetails(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    @classmethod
+    def to_json(cls, x):
+        return {
+            'author_id': x.author_id,
+            'author_name': x.author_name,
+        }
 
+    @classmethod
+    def return_all(cls, limit, page):
+        return {'data': list(map(lambda x: cls.to_json(x), AuthorDetails.query.limit(limit).offset((page-1) * limit)))}
 
-
-
-
-
-
-
-
-
+    @classmethod
+    def return_top(cls, limit, page):
+        return cls.return_all(limit, page)

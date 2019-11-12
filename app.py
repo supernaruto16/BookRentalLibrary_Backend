@@ -5,7 +5,7 @@ from DB_Connection.db import init, sql_db
 from flask_jwt_extended import JWTManager
 from Model.RevokedTokenModel import RevokedTokenModel
 import json
-from Resource import validatedResource
+from Resource import validatedResource, BookResource, CategoryResource, AuthorResource
 from Model.import_data import ImportData
 import os
 from Model.models import UserDetails
@@ -78,15 +78,15 @@ ns = api.namespace('api', description='BookRental API')
 db = sql_db()
 
 
-@app.before_first_request
-def create_tables():
-    print(db)
-    db.create_all()
-    import_data = ImportData(os.getcwd() + '/Model/data')
-    import_data.import_authors()
-    import_data.import_categories()
-    import_data.import_books()
-    import_data.import_book_categories()
+# @app.before_first_request
+# def create_tables():
+#     print(db)
+#     db.create_all()
+#     import_data = ImportData(os.getcwd() + '/Model/data')
+#     import_data.import_authors()
+#     import_data.import_categories()
+#     import_data.import_books()
+#     import_data.import_book_categories()
 
 
 ns.add_resource(validatedResource.UserRegistration, '/registration')
@@ -96,6 +96,12 @@ ns.add_resource(validatedResource.UserLogoutRefresh, '/logout/refresh')
 ns.add_resource(validatedResource.TokenRefresh, '/token/refresh')
 ns.add_resource(validatedResource.AllUsers, '/users')
 ns.add_resource(validatedResource.SecretResource, '/secret')
+ns.add_resource(BookResource.NewBook, '/books/new')
+ns.add_resource(CategoryResource.AllCategory, '/categories')
+ns.add_resource(CategoryResource.PopularCategories, '/categories/popular')
+ns.add_resource(BookResource.AllBooksByCategory, '/books/category')
+ns.add_resource(BookResource.TopBooks, '/books/top')
+ns.add_resource(AuthorResource.TopAuthor, '/authors/top')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False)

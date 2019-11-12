@@ -30,9 +30,13 @@ class ImportData:
             for i in range(len(lines)):
                 data = json.loads(lines[i])
                 print(f'[+] book [{i+1}/{total}]')
+                publication_year = data['publication_year']
+                if publication_year is None:
+                    publication_year = data['original_publication_year']
+
                 book = BookDetails(ISBN=data['isbn13'],
                                    book_title=data['title'],
-                                   publication_year=data['original_publication_year'],
+                                   publication_year=publication_year,
                                    book_description=data['description'],
                                    author_id=data['author_id'],
                                    book_cover=data['image_url'])
