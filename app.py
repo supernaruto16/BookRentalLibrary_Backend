@@ -8,6 +8,7 @@ import json
 from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource
 from Model.import_data import ImportData
 import os
+from Model.models import UserDetails
 
 
 def factory():
@@ -36,6 +37,31 @@ jwt = JWTManager(app)
 @app.route('/')
 def helloworld():
     return "Hello"
+
+
+@app.route('/login',  methods=['GET', 'POST'])
+def login(request):
+    if request.method == 'GET':
+        return
+    if request.method == 'POST':
+        post_data = request.get_json()
+        status, msg = UserDetails.check_login(post_data.get('username'), post_data.get('password'))
+        return jsonify({
+            'message': msg
+        })
+
+
+@app.route('/registration', methods=['GET', 'POST'])
+def registration(request):
+    if request.method == 'GET':
+        return
+    if request.method == 'POST':
+        post_data = request.get_json()
+        status, msg = UserDetails.add_user(post_data.get('username'), post_data.get('password'),
+                                           post_data.get('firstname'), post_data.get('lastname'))
+        return jsonify({
+            'message': msg
+        })
 
 
 @jwt.token_in_blacklist_loader
