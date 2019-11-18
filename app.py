@@ -5,7 +5,7 @@ from DB_Connection.db import init, sql_db
 from flask_jwt_extended import JWTManager
 from Model.RevokedTokenModel import RevokedTokenModel
 import json
-from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource
+from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource, ActionResource
 from Model.import_data import ImportData
 import os
 from Model.models import UserDetails
@@ -37,31 +37,6 @@ jwt = JWTManager(app)
 @app.route('/')
 def helloworld():
     return "Hello"
-
-
-@app.route('/login',  methods=['GET', 'POST'])
-def login(request):
-    if request.method == 'GET':
-        return
-    if request.method == 'POST':
-        post_data = request.get_json()
-        status, msg = UserDetails.check_login(post_data.get('username'), post_data.get('password'))
-        return jsonify({
-            'message': msg
-        })
-
-
-@app.route('/registration', methods=['GET', 'POST'])
-def registration(request):
-    if request.method == 'GET':
-        return
-    if request.method == 'POST':
-        post_data = request.get_json()
-        status, msg = UserDetails.add_user(post_data.get('username'), post_data.get('password'),
-                                           post_data.get('firstname'), post_data.get('lastname'))
-        return jsonify({
-            'message': msg
-        })
 
 
 @jwt.token_in_blacklist_loader
@@ -102,6 +77,10 @@ ns.add_resource(CategoryResource.PopularCategories, '/categories/popular')
 ns.add_resource(BookResource.AllBooksByCategory, '/books/category')
 ns.add_resource(BookResource.TopBooks, '/books/top')
 ns.add_resource(AuthorResource.TopAuthor, '/authors/top')
+ns.add_resource(ActionResource.UserRating, '/book/rating')
+ns.add_resource(ActionResource.UserAdd, '/book/add')
+ns.add_resource(ActionResource.UserBorrow, '/book/borrow')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False)
