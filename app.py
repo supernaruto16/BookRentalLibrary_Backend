@@ -5,7 +5,7 @@ from DB_Connection.db import init, sql_db
 from flask_jwt_extended import JWTManager
 from Model.RevokedTokenModel import RevokedTokenModel
 import json
-from Resource import validatedResource, BookResource, CategoryResource, AuthorResource
+from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource
 from Model.import_data import ImportData
 import os
 
@@ -63,13 +63,13 @@ db = sql_db()
 #     import_data.import_book_categories()
 
 
-ns.add_resource(validatedResource.UserRegistration, '/registration')
-ns.add_resource(validatedResource.UserLogin, '/login')
-ns.add_resource(validatedResource.UserLogoutAccess, '/logout/access')
-ns.add_resource(validatedResource.UserLogoutRefresh, '/logout/refresh')
-ns.add_resource(validatedResource.TokenRefresh, '/token/refresh')
-ns.add_resource(validatedResource.AllUsers, '/users')
-ns.add_resource(validatedResource.SecretResource, '/secret')
+ns.add_resource(UserValidationResource.UserRegistration, '/registration')
+ns.add_resource(UserValidationResource.UserLogin, '/login')
+ns.add_resource(UserValidationResource.UserLogoutAccess, '/logout/access')
+ns.add_resource(UserValidationResource.UserLogoutRefresh, '/logout/refresh')
+ns.add_resource(UserValidationResource.TokenRefresh, '/token/refresh')
+ns.add_resource(UserValidationResource.AllUsers, '/users')
+ns.add_resource(UserValidationResource.SecretResource, '/secret')
 ns.add_resource(BookResource.NewBook, '/books/new')
 ns.add_resource(CategoryResource.AllCategory, '/categories')
 ns.add_resource(CategoryResource.PopularCategories, '/categories/popular')

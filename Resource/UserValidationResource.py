@@ -3,6 +3,7 @@ from Model.models import UserDetails
 from Model.RevokedTokenModel import RevokedTokenModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required,
                                 get_jwt_identity, get_raw_jwt)
+from Utils.InputValidation import *
 import requests
 import json
 
@@ -17,15 +18,19 @@ parse.add_argument('password', help="This field cannot be blank", required=True)
 class UserRegistration(Resource):
     def post(self):
         data = parse.parse_args()
-        if UserDetails.find_by_email(data['email']):
-            return {'message': 'User already exists'}
+        v = validate_new_email(data['email'])
+        if not v[0]:
+            return {'message': v[1]}, 400
+        new_user_id = UserDetails.get_number_of_users() + 1
         new_user = UserDetails(
+            user_id=new_user_id,
             first_name=data['firstname'],
             last_name=data['lastname'],
             email=data['email'],
+            username=data['email'],
             password=UserDetails.generate_hash(data['password'], ),
             user_type_id=3,
-            cash=0
+            cash=1000
         )
         try:
             new_user.save_to_db()
@@ -50,7 +55,7 @@ class UserLogin(Resource):
         data = loginParse.parse_args()
         current_user = UserDetails.find_by_email(data['email'])
         if not current_user:
-            return {'message': 'Not exist'}
+            return {'message': 'Email does not exist'}, 401
 
         if UserDetails.verify_hash(data['password'], current_user.password):
             access_token = create_access_token(identity=data['email'])

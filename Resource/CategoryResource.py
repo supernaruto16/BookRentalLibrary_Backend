@@ -10,8 +10,8 @@ class AllCategory(Resource):
 
 
 popular_parse = reqparse.RequestParser()
-popular_parse.add_argument('limit', default=10)
-popular_parse.add_argument('page', default=1)
+popular_parse.add_argument('limit', type=int, default=10)
+popular_parse.add_argument('page', type=int, default=1)
 
 
 class PopularCategories(Resource):

@@ -2,8 +2,8 @@ from flask_restplus import Resource, reqparse
 from Model.models import BookDetails
 
 newbook_parse = reqparse.RequestParser()
-newbook_parse.add_argument('limit', default=5)
-newbook_parse.add_argument('page', default=1)
+newbook_parse.add_argument('limit', type=int, default=5)
+newbook_parse.add_argument('page', type=int, default=1)
 
 
 class NewBook(Resource):
@@ -25,9 +25,9 @@ class NewBook(Resource):
 
 
 category_books_parse = reqparse.RequestParser()
-category_books_parse.add_argument('category_id', required=True)
-category_books_parse.add_argument('limit', default=10)
-category_books_parse.add_argument('page', default=1)
+category_books_parse.add_argument('category_id', type=int, required=True)
+category_books_parse.add_argument('limit', type=int, default=10)
+category_books_parse.add_argument('page', type=int, default=1)
 
 
 class AllBooksByCategory(Resource):
@@ -50,8 +50,8 @@ class AllBooksByCategory(Resource):
 
 
 top_parse = reqparse.RequestParser()
-top_parse.add_argument('limit', default=10)
-top_parse.add_argument('page', default=1)
+top_parse.add_argument('limit', type=int, default=10)
+top_parse.add_argument('page', type=int, default=1)
 
 
 class TopBooks(Resource):

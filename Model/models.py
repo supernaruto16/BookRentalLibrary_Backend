@@ -9,13 +9,13 @@ db = sql_db()
 class UserDetails(db.Model):
     __tablename__ = 'user_details'
 
-    user_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, primary_key=True, nullable=False)
     email = db.Column(db.String(120), nullable=False)
     password = db.Column(db.String(120), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'))
-    cash = db.Column(db.Integer)
+    user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'), nullable=False)
+    cash = db.Column(db.Integer, nullable=False)
     borrow_details = db.relationship("BorrowDetails", backref="user_details")
     owner = db.relationship("BookWarehouse", backref="owner_details", foreign_keys='BookWarehouse.owner_id')
     validator = db.relationship("BookWarehouse", backref="validator_details", foreign_keys='BookWarehouse.validator')
@@ -30,13 +30,19 @@ class UserDetails(db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
+    def get_number_of_users(cls):
+        return cls.query(UserDetails).count()
+
+    @classmethod
     def return_all(cls):
         def to_json(x):
             return {
-                'email': x.username,
+                'id': x.user_id,
+                'email': x.email,
                 'password': x.password,
                 'first_name': x.first_name,
                 'last_name': x.last_name,
+                'user_type_id': x.user_type_id,
                 'cash': 0
             }
 
@@ -74,6 +80,18 @@ class BorrowDetails(db.Model):
     address = db.Column(db.String(500))
     status = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
 
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def get_total_num(cls):
+        return cls.query.count()
+
+    @classmethod
+    def find_by_id(cls, borrow_id):
+        return cls.query.filter_by(borrow_id=borrow_id).first()
+
 
 class WarningDetails(db.Model):
     __tablename__ = 'warning_details'
@@ -107,8 +125,12 @@ class CategoryDetails(db.Model):
     @classmethod
     def popular_categories(cls, limit, page):
         return db.session.query(
-            func.count(BookCategories.category_id).label('num_books'), CategoryDetails.category_id, CategoryDetails.category_name
-        ).join(CategoryDetails).group_by(BookCategories.category_id).order_by(desc('num_books')).limit(limit).offset((page - 1) * limit)
+            func.count(BookCategories.category_id).label('num_books'),
+            CategoryDetails.category_id,
+            CategoryDetails.category_name
+        ).join(CategoryDetails)\
+            .group_by(BookCategories.category_id)\
+            .order_by(desc('num_books')).limit(limit).offset((page - 1) * limit)
 
 
 class UserTypeDetails(db.Model):
@@ -125,13 +147,25 @@ class BookWarehouse(db.Model):
     warehouse_id = db.Column(db.Integer, primary_key=True)
     book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'))
     owner_id = db.Column(db.Integer, db.ForeignKey('user_details.user_id'))
-    is_validate = db.Column(db.Integer)
+    is_validated = db.Column(db.Integer)
     status = db.Column(db.Integer)
     validator = db.Column(db.Integer, db.ForeignKey('user_details.user_id'))
     price = db.Column(db.Integer)
     address = db.Column(db.String(200))
     time_upload = db.Column(db.DateTime)
     borrow_details = db.relationship("BorrowDetails", backref="book_warehouse")
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def find_by_id(cls, warehouse_id):
+        return cls.query.filter_by(warehouse_id=warehouse_id).first()
+
+    @classmethod
+    def get_total_num(cls):
+        return cls.query.count()
 
 
 class RatingDetails(db.Model):
@@ -199,6 +233,7 @@ class BookDetails(db.Model):
     @classmethod
     def return_top_books(cls, limit, page):
         return cls.return_all(limit, page)
+
 
 class BookCategories(db.Model):
     __tablename__ = 'book_categories'
