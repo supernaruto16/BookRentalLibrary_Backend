@@ -1,6 +1,8 @@
-from flask_restplus import reqparse, Resource
-
+from flask_restplus import Namespace, Resource, reqparse
 from Model.models import CategoryDetails
+
+
+api = Namespace('categories')
 
 
 class AllCategory(Resource):
@@ -15,9 +17,9 @@ popular_parse.add_argument('page', type=int, default=1)
 
 
 class PopularCategories(Resource):
+    @api.expect(popular_parse)
     def get(self):
         data = popular_parse.parse_args()
-
         popular = {
             'data': list(map(lambda x: {
                 'category_id': x[1],

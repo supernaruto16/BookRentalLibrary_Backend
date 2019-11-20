@@ -1,4 +1,4 @@
-from flask_restplus import Resource, reqparse
+from flask_restplus import Namespace, Resource, reqparse
 from Model.models import UserDetails
 from Model.RevokedTokenModel import RevokedTokenModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required,
@@ -8,6 +8,8 @@ import requests
 import json
 
 
+api = Namespace('auth')
+
 parse = reqparse.RequestParser()
 parse.add_argument('firstname', help="This field cannot be blank", required=True)
 parse.add_argument('lastname', help="This field cannot be blank", required=True)
@@ -16,6 +18,7 @@ parse.add_argument('password', help="This field cannot be blank", required=True)
 
 
 class UserRegistration(Resource):
+    @api.expect(parse)
     def post(self):
         data = parse.parse_args()
         v = validate_new_email(data['email'])
@@ -48,6 +51,7 @@ loginParse.add_argument('password', help="This field cannot be blank", required=
 
 
 class UserLogin(Resource):
+    @api.expect(loginParse)
     def post(self):
         data = loginParse.parse_args()
         current_user = UserDetails.find_by_email(data['email'])
@@ -98,10 +102,12 @@ class TokenRefresh(Resource):
         return {'access_token': access_token}
 
 
-class AllUsers(Resource):
+class GetAllUsers(Resource):
     def get(self):
         return UserDetails.return_all()
 
+
+class DelAllUsers(Resource):
     def delete(self):
         return UserDetails.delete_all()
 

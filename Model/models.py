@@ -175,6 +175,15 @@ class BookWarehouse(db.Model):
         self.status = new_status
         self.save_to_db()
 
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+
+    @classmethod
+    def find_by_owner(cls, owner_id, limit, page):
+        return {'data': list(map(lambda x: BookWarehouse.as_dict(x),
+                                 cls.query.filter_by(owner_id=owner_id)
+                                 .limit(limit).offset((page-1) * limit)))}
+
     @classmethod
     def find_by_id(cls, warehouse_id):
         return cls.query.filter_by(warehouse_id=warehouse_id).first()

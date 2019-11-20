@@ -1,8 +1,11 @@
-from flask import jsonify
-from flask_restplus import Resource, reqparse
+from flask_restplus import Namespace, Resource, reqparse
 from Model.models import BookDetails, BookWarehouse, UserDetails
 from flask_jwt_extended import jwt_required
 import html
+
+
+api = Namespace('books')
+
 
 newbook_parse = reqparse.RequestParser()
 newbook_parse.add_argument('limit', type=int, default=5)
@@ -10,6 +13,7 @@ newbook_parse.add_argument('page', type=int, default=1)
 
 
 class NewBook(Resource):
+    @api.expect(newbook_parse)
     def get(self):
         data = newbook_parse.parse_args()
 
@@ -34,6 +38,7 @@ category_books_parse.add_argument('page', type=int, default=1)
 
 
 class AllBooksByCategory(Resource):
+    @api.expect(category_books_parse)
     def get(self):
         data = category_books_parse.parse_args()
 
@@ -58,6 +63,7 @@ top_parse.add_argument('page', type=int, default=1)
 
 
 class TopBooks(Resource):
+    @api.expect(top_parse)
     def get(self):
         data = top_parse.parse_args()
         return BookDetails.return_top_books(int(data['limit']), int(data['page']))
@@ -66,10 +72,9 @@ class TopBooks(Resource):
 details_parse = reqparse.RequestParser()
 details_parse.add_argument('id', required=True)
 
-from app import api
+
 class DetailsBook(Resource):
-    @api.doc(responses={ 200: 'OK', 400: 'Invalid Argument', 500: 'Mapping Key Error'},
-             params={ 'id': 'Specify the Id associated with the person'})
+    @api.expect(details_parse)
     def get(self):
         data = details_parse.parse_args()
         book_details = BookDetails.find_by_isbn(html.escape(data['id']))

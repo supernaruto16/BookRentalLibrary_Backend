@@ -34,9 +34,9 @@ init(app)
 jwt = JWTManager(app)
 
 
-    # @app.route('/')
-    # def helloworld():
-    #     return "Hello"
+# @app.route('/')
+# def helloworld():
+#     return "Hello"
 
 
 @jwt.token_in_blacklist_loader
@@ -46,9 +46,14 @@ def check_if_token_in_blacklist(decrypted_token):
 
 
 api = Api(app, version='1.0', title='BookRental API',
-          description='BookRental API'
-          )
-ns = api.namespace('api', description='BookRental API')
+          description='BookRental API')
+auth_ns = api.namespace('auth', description='Authentication API')
+books_ns = api.namespace('books', description='Books API')
+user_ns = api.namespace('user', description='Users API')
+authors_ns = api.namespace('authors', description='Authors API')
+categories_ns = api.namespace('categories', description='Categories API')
+admin_ns = api.namespace('admin', description='Admin API')
+
 
 db = sql_db()
 
@@ -65,23 +70,25 @@ db = sql_db()
 #     import_data.import_book_categories()
 
 
-ns.add_resource(UserValidationResource.UserRegistration, '/registration')
-ns.add_resource(UserValidationResource.UserLogin, '/login')
-ns.add_resource(UserValidationResource.UserLogoutAccess, '/logout/access')
-ns.add_resource(UserValidationResource.UserLogoutRefresh, '/logout/refresh')
-ns.add_resource(UserValidationResource.TokenRefresh, '/token/refresh')
-ns.add_resource(UserValidationResource.AllUsers, '/users')
-ns.add_resource(UserValidationResource.SecretResource, '/secret')
-ns.add_resource(BookResource.NewBook, '/books/new')
-ns.add_resource(CategoryResource.AllCategory, '/categories')
-ns.add_resource(CategoryResource.PopularCategories, '/categories/popular')
-ns.add_resource(BookResource.AllBooksByCategory, '/books/category')
-ns.add_resource(BookResource.TopBooks, '/books/top')
-ns.add_resource(BookResource.DetailsBook, '/book/details')
-ns.add_resource(AuthorResource.TopAuthor, '/authors/top')
-ns.add_resource(ActionResource.UserRating, '/book/rating')
-ns.add_resource(ActionResource.UserAdd, '/book/add')
-ns.add_resource(ActionResource.UserBorrow, '/book/borrow')
+auth_ns.add_resource(UserValidationResource.UserRegistration, '/registration')
+auth_ns.add_resource(UserValidationResource.UserLogin, '/login')
+auth_ns.add_resource(UserValidationResource.UserLogoutAccess, '/logout/access')
+auth_ns.add_resource(UserValidationResource.UserLogoutRefresh, '/logout/refresh')
+auth_ns.add_resource(UserValidationResource.TokenRefresh, '/token/refresh')
+admin_ns.add_resource(UserValidationResource.GetAllUsers, '/getallusers')
+admin_ns.add_resource(UserValidationResource.SecretResource, '/secret')
+admin_ns.add_resource(UserValidationResource.GetAllUsers, '/delallusers')
+books_ns.add_resource(BookResource.NewBook, '/new')
+books_ns.add_resource(BookResource.AllBooksByCategory, '/category')
+books_ns.add_resource(BookResource.TopBooks, '/top')
+books_ns.add_resource(BookResource.DetailsBook, '/details')
+categories_ns.add_resource(CategoryResource.AllCategory, '/')
+categories_ns.add_resource(CategoryResource.PopularCategories, '/popular')
+authors_ns.add_resource(AuthorResource.TopAuthor, '/top')
+user_ns.add_resource(ActionResource.UserRating, '/book/rate')
+user_ns.add_resource(ActionResource.UserAdd, '/book/add')
+user_ns.add_resource(ActionResource.UserBorrow, '/book/borrow')
+user_ns.add_resource(ActionResource.UserBookList, '/books')
 
 
 if __name__ == '__main__':

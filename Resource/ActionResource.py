@@ -1,4 +1,4 @@
-from flask_restplus import Resource, reqparse
+from flask_restplus import Namespace, Resource, reqparse
 from Model.models import UserDetails
 from Model.models import RatingDetails
 from Model.models import BookDetails
@@ -6,6 +6,25 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
                                 jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from Utils.InputValidation import *
 import html
+
+
+api = Namespace('user')
+
+list_parse = reqparse.RequestParser()
+list_parse.add_argument('limit', type=int, default=5)
+list_parse.add_argument('page', type=int, default=1)
+
+
+class UserBookList(Resource):
+    @jwt_required
+    @api.expect(list_parse)
+    def get(self):
+        data = list_parse.parse_args()
+        current_user = get_jwt_identity()
+        user_details = UserDetails.find_by_email(current_user)
+        if not user_details:
+            return {'message': 'Email does not exist'}, 401
+        return BookWarehouse.find_by_owner(user_details.user_id, data['limit'], data['page']), 200
 
 
 rating_req = reqparse.RequestParser()
@@ -16,6 +35,7 @@ rating_req.add_argument('rating_comment')
 
 class UserRating(Resource):
     @jwt_required
+    @api.expect(rating_req)
     def post(self):
         data = rating_req.parse_args()
         current_user = get_jwt_identity()
@@ -46,6 +66,7 @@ add_req.add_argument('time_upload')
 
 class UserAdd(Resource):
     @jwt_required
+    @api.expect(add_req)
     def post(self):
         data = add_req.parse_args()
         current_user = get_jwt_identity()
@@ -73,11 +94,12 @@ borrow_req = reqparse.RequestParser()
 borrow_req.add_argument('warehouse_id', type=int, required=True)
 borrow_req.add_argument('day_borrow')
 borrow_req.add_argument("day_expected_return")
-borrow_req.add_argument("address")
+borrow_req.add_argument("address", default="")
 
 
 class UserBorrow(Resource):
     @jwt_required
+    @api.expect(borrow_req)
     def post(self):
         data = borrow_req.parse_args()
         current_user = get_jwt_identity()
@@ -97,7 +119,7 @@ class UserBorrow(Resource):
                                        user_id=user_details.user_id,
                                        day_borrow=data['day_borrow'],
                                        day_expected_return=data['day_expected_return'],
-                                       address=html.escape(['address']))
+                                       address=html.escape(data['address']))
         borrow_details.save_to_db()
         warehouse_details.status = 0
         warehouse_details.save_to_db()
