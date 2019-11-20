@@ -34,9 +34,9 @@ init(app)
 jwt = JWTManager(app)
 
 
-@app.route('/')
-def helloworld():
-    return "Hello"
+    # @app.route('/')
+    # def helloworld():
+    #     return "Hello"
 
 
 @jwt.token_in_blacklist_loader
@@ -58,6 +58,7 @@ db = sql_db()
 #     print(db)
 #     db.create_all()
 #     import_data = ImportData(os.getcwd() + '/Model/data')
+#     import_data.import_user_type()
 #     import_data.import_authors()
 #     import_data.import_categories()
 #     import_data.import_books()
@@ -76,6 +77,7 @@ ns.add_resource(CategoryResource.AllCategory, '/categories')
 ns.add_resource(CategoryResource.PopularCategories, '/categories/popular')
 ns.add_resource(BookResource.AllBooksByCategory, '/books/category')
 ns.add_resource(BookResource.TopBooks, '/books/top')
+ns.add_resource(BookResource.DetailsBook, '/book/details')
 ns.add_resource(AuthorResource.TopAuthor, '/authors/top')
 ns.add_resource(ActionResource.UserRating, '/book/rating')
 ns.add_resource(ActionResource.UserAdd, '/book/add')
@@ -83,4 +85,4 @@ ns.add_resource(ActionResource.UserBorrow, '/book/borrow')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False)
+    app.run(host='0.0.0.0', debug=True)

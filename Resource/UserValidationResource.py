@@ -21,28 +21,25 @@ class UserRegistration(Resource):
         v = validate_new_email(data['email'])
         if not v[0]:
             return {'message': v[1]}, 400
-        new_user_id = UserDetails.get_number_of_users() + 1
         new_user = UserDetails(
-            user_id=new_user_id,
             first_name=data['firstname'],
             last_name=data['lastname'],
             email=data['email'],
-            username=data['email'],
             password=UserDetails.generate_hash(data['password'], ),
-            user_type_id=3,
+            user_type_id=1,
             cash=1000
         )
-        try:
-            new_user.save_to_db()
-            access_token = create_access_token(identity=data['email'])
-            refresh_token = create_refresh_token(identity=data['email'])
-            return {
-                'message': 'Success',
-                'access_token': access_token,
-                'refresh_token': refresh_token
-                }
-        except:
-            return {'message': 'Something went wrong'}, 500
+        # try:
+        new_user.save_to_db()
+        access_token = create_access_token(identity=data['email'])
+        refresh_token = create_refresh_token(identity=data['email'])
+        return {
+            'message': 'Success',
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }
+        # except:
+        #     return {'message': 'Something went wrong'}, 500
 
 
 loginParse = reqparse.RequestParser()

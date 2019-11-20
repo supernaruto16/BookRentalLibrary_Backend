@@ -1,5 +1,8 @@
+from flask import jsonify
 from flask_restplus import Resource, reqparse
-from Model.models import BookDetails
+from Model.models import BookDetails, BookWarehouse, UserDetails
+from flask_jwt_extended import jwt_required
+import html
 
 newbook_parse = reqparse.RequestParser()
 newbook_parse.add_argument('limit', type=int, default=5)
@@ -19,7 +22,7 @@ class NewBook(Resource):
                 'book_cover': x.book_cover,
                 'author': x.author_details.author_name
             },
-                             BookDetails.return_new(int(data['limit']), int(data['page']))))
+             BookDetails.return_new(int(data['limit']), int(data['page']))))
         }
         return new_book
 
@@ -43,8 +46,8 @@ class AllBooksByCategory(Resource):
                 'book_cover': x.book_cover,
                 'author': x.author_details.author_name
             },
-                             BookDetails.return_by_category(int(data['category_id']), int(data['limit']),
-                                                            int(data['page']))))
+             BookDetails.return_by_category(int(data['category_id']), int(data['limit']),
+                                            int(data['page']))))
         }
         return books
 
@@ -58,3 +61,28 @@ class TopBooks(Resource):
     def get(self):
         data = top_parse.parse_args()
         return BookDetails.return_top_books(int(data['limit']), int(data['page']))
+
+
+details_parse = reqparse.RequestParser()
+details_parse.add_argument('id', required=True)
+
+from app import api
+class DetailsBook(Resource):
+    @api.doc(responses={ 200: 'OK', 400: 'Invalid Argument', 500: 'Mapping Key Error'},
+             params={ 'id': 'Specify the Id associated with the person'})
+    def get(self):
+        data = details_parse.parse_args()
+        book_details = BookDetails.find_by_isbn(html.escape(data['id']))
+        if not book_details:
+            return 'Book does not exist', 400
+        book_warehouses = book_details.book_warehouse
+        if not book_warehouses:
+            return book_details, 200
+        warehouses_info = list()
+        for each in book_warehouses:
+            owner_details = UserDetails.find_by_id(each.owner_id)
+            warehouses_info.append((owner_details.email, each.price, each.warehouse_id))
+        return {
+            'book': book_details.as_dict(),
+            'warehouses': warehouses_info
+        }, 200

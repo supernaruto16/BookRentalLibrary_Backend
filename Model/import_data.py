@@ -12,6 +12,15 @@ class ImportData:
         self.authors_json_path = data_path + '/authors.json'
         self.categories_json_path = data_path + '/categories.json'
 
+    def import_user_type(self):
+        types = []
+        types.append(UserTypeDetails(user_type_name='admin'))
+        types.append(UserTypeDetails(user_type_name='user'))
+        types.append(UserTypeDetails(user_type_name='validator'))
+        for each in types:
+            print(each.user_type_id)
+            each.save_to_db()
+
     def import_authors(self):
         with open(self.authors_json_path, 'r') as f:
             lines = f.readlines()

@@ -30,8 +30,12 @@ class UserDetails(db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(user_id=id).first()
+
+    @classmethod
     def get_number_of_users(cls):
-        return cls.query(UserDetails).count()
+        return cls.query.count()
 
     @classmethod
     def return_all(cls):
@@ -140,6 +144,14 @@ class UserTypeDetails(db.Model):
     user_type_name = db.Column(db.String(120))
     user_details = db.relationship("UserDetails", backref="user_type_details")
 
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(user_type_id=id).first()
+
 
 class BookWarehouse(db.Model):
     __tablename__ = 'book_warehouse'
@@ -147,8 +159,8 @@ class BookWarehouse(db.Model):
     warehouse_id = db.Column(db.Integer, primary_key=True)
     book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'))
     owner_id = db.Column(db.Integer, db.ForeignKey('user_details.user_id'))
-    is_validated = db.Column(db.Integer)
     status = db.Column(db.Integer)
+    is_validate = db.Column(db.Integer)
     validator = db.Column(db.Integer, db.ForeignKey('user_details.user_id'))
     price = db.Column(db.Integer)
     address = db.Column(db.String(200))
@@ -159,9 +171,17 @@ class BookWarehouse(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def change_status(self, new_status):
+        self.status = new_status
+        self.save_to_db()
+
     @classmethod
     def find_by_id(cls, warehouse_id):
         return cls.query.filter_by(warehouse_id=warehouse_id).first()
+
+    @classmethod
+    def get_by_book_id(cls, book_id):
+        return cls.query.filter_by(book_id=book_id).all()
 
     @classmethod
     def get_total_num(cls):
@@ -199,6 +219,9 @@ class BookDetails(db.Model):
             db.session.commit()
             return True
         return False
+
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
 
     @classmethod
     def find_by_title(cls, title):

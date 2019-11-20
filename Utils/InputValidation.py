@@ -1,17 +1,16 @@
-from cerberus import Validator
+# from cerberus import Validator
 from Model.models import *
+import re
+import html
+
+PATTERN = dict()
+PATTERN['email'] = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$")
 
 
 def validate_email(email):
-    v = Validator()
-    v.schema = {
-        "type": "string",
-        "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
-    }
-    if v.validate(email):
-        return True,
-    else:
+    if not PATTERN['email'].match(email):
         return False, 'Email contain invalid characters'
+    return True,
 
 
 def validate_new_email(email):
@@ -33,6 +32,7 @@ def validate_existed_email(email):
 
 
 def validate_book_id(book_id):
+    book_id = html.escape(book_id)
     if not BookDetails.find_by_isbn(book_id):
         return False, 'Book does not exist'
     return True,
@@ -46,3 +46,12 @@ def validate_warehouse_available(id):
     if not bookwarehouse_details.status:
         return False, 'Book does not available'
     return True,
+
+
+def validate_role(email, role):
+    user_details = UserDetails.find_by_email(email)
+    user_type_details = UserTypeDetails.find_by_id(user_details.user_type_id)
+    if not user_type_details or user_type_details.type_name != role:
+        return False, 'Need %s authorization' % role
+    return True,
+
