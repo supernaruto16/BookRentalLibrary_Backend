@@ -32,17 +32,17 @@ class UserRegistration(Resource):
             user_type_id=1,
             cash=1000
         )
-        # try:
-        new_user.save_to_db()
-        access_token = create_access_token(identity=data['email'])
-        refresh_token = create_refresh_token(identity=data['email'])
-        return {
-            'message': 'Success',
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        }
-        # except:
-        #     return {'message': 'Something went wrong'}, 500
+        try:
+            new_user.save_to_db()
+            access_token = create_access_token(identity=(new_user.email, new_user.user_id))
+            refresh_token = create_refresh_token(identity=(new_user.email, new_user.user_id))
+            return {
+                'message': 'Success',
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            }
+        except:
+            return {'message': 'Something went wrong'}, 500
 
 
 loginParse = reqparse.RequestParser()
@@ -59,8 +59,8 @@ class UserLogin(Resource):
             return {'message': 'Email does not exist'}, 401
 
         if UserDetails.verify_hash(data['password'], current_user.password):
-            access_token = create_access_token(identity=data['email'])
-            refresh_token = create_refresh_token(identity=data['email'])
+            access_token = create_access_token(identity=(data['email'], current_user.user_id))
+            refresh_token = create_refresh_token(identity=(data['email'], current_user.user_id))
             return {
                 'message': 'Success',
                 'access_token': access_token,

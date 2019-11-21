@@ -88,6 +88,15 @@ class BorrowDetails(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+
+    @classmethod
+    def find_by_borrower(cls, borrower_id, limit, page):
+        return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
+                                 cls.query.filter_by(borrower_id=borrower_id)
+                                 .limit(limit).offset((page-1) * limit)))}
+
     @classmethod
     def get_total_num(cls):
         return cls.query.count()
@@ -204,6 +213,21 @@ class RatingDetails(db.Model):
     book_id = db.Column(db.String(32), db.ForeignKey('book_details.ISBN'), primary_key=True)
     rating_num = db.Column(db.Integer)
     rating_comment = db.Column(db.TEXT)
+
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+
+    @classmethod
+    def find_by_user(cls, user_id, limit, page):
+        return {'data': list(map(lambda x: RatingDetails.as_dict(x),
+                                 cls.query.filter_by(user_id=user_id)
+                                 .limit(limit).offset((page-1) * limit)))}
+
+    @classmethod
+    def find_by_book(cls, book_id, limit, page):
+        return {'data': list(map(lambda x: RatingDetails.as_dict(x),
+                                 cls.query.filter_by(book_id=book_id)
+                                 .limit(limit).offset((page-1) * limit)))}
 
     def save_to_db(self):
         db.session.add(self)

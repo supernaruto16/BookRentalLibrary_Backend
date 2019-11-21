@@ -26,16 +26,18 @@ def validate_existed_email(email):
     v = validate_email(email)
     if not v[0]:
         return v
-    if not UserDetails.find_by_email(email):
+    user_details = UserDetails.find_by_email(email)
+    if not user_details:
         return False, 'Email does not exist'
-    return True,
+    return True, user_details
 
 
 def validate_book_id(book_id):
-    book_id = html.escape(book_id)
-    if not BookDetails.find_by_isbn(book_id):
+    # book_id = html.escape(book_id)
+    book_details = BookDetails.find_by_isbn(book_id)
+    if not book_details:
         return False, 'Book does not exist'
-    return True,
+    return True, book_details
 
 
 def validate_warehouse_available(id):

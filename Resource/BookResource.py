@@ -2,7 +2,7 @@ from flask_restplus import Namespace, Resource, reqparse
 from Model.models import BookDetails, BookWarehouse, UserDetails
 from flask_jwt_extended import jwt_required
 import html
-
+from Utils.InputValidation import *
 
 api = Namespace('books')
 
@@ -70,24 +70,30 @@ class TopBooks(Resource):
 
 
 details_parse = reqparse.RequestParser()
-details_parse.add_argument('id', required=True)
+details_parse.add_argument('book_id', required=True)
 
 
 class DetailsBook(Resource):
     @api.expect(details_parse)
     def get(self):
         data = details_parse.parse_args()
-        book_details = BookDetails.find_by_isbn(html.escape(data['id']))
-        if not book_details:
+        v = validate_book_id(data['book_id'])
+        if not v[0]:
             return 'Book does not exist', 400
-        book_warehouses = book_details.book_warehouse
-        if not book_warehouses:
-            return book_details, 200
-        warehouses_info = list()
-        for each in book_warehouses:
-            owner_details = UserDetails.find_by_id(each.owner_id)
-            warehouses_info.append((owner_details.email, each.price, each.warehouse_id))
-        return {
-            'book': book_details.as_dict(),
-            'warehouses': warehouses_info
-        }, 200
+        book_details = v[1]
+        return book_details.as_dict(), 200
+
+
+ratings_parse = reqparse.RequestParser()
+ratings_parse.add_argument('book_id', required=True)
+
+
+class RatingsBook(Resource):
+    @api.expect(ratings_parse)
+    def get(self):
+        data = details_parse.parse_args()
+        v = validate_book_id(data['book_id'])
+        if not v[0]:
+            return 'Book does not exist', 400
+        book_details = v[1]
+        return RatingDetails.find_by_book(book_details.book_id, data['limit'], data['page']), 200

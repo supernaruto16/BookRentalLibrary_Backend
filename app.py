@@ -5,7 +5,8 @@ from DB_Connection.db import init, sql_db
 from flask_jwt_extended import JWTManager
 from Model.RevokedTokenModel import RevokedTokenModel
 import json
-from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource, ActionResource
+from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource, WarehousesResource, \
+    UserResource
 from Model.import_data import ImportData
 import os
 from Model.models import UserDetails
@@ -23,7 +24,8 @@ app = factory()
 with open('./config.json') as json_data_file:
     data = json.load(json_data_file)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://' + data["user"] + ':' + data["password"] + '@localhost/'+ data["database"]
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://' + data["user"] + ':' + data["password"] + '@localhost/' + \
+                                        data["database"]
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # app.config['SQLALCHEMY_ECHO'] = True
 app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
@@ -49,14 +51,13 @@ api = Api(app, version='1.0', title='BookRental API',
           description='BookRental API')
 auth_ns = api.namespace('auth', description='Authentication API')
 books_ns = api.namespace('books', description='Books API')
-user_ns = api.namespace('user', description='Users API')
+warehouses_ns = api.namespace('warehouses', description='Warehouses API')
+user_ns = api.namespace('user', description='User API')
 authors_ns = api.namespace('authors', description='Authors API')
 categories_ns = api.namespace('categories', description='Categories API')
 admin_ns = api.namespace('admin', description='Admin API')
 
-
 db = sql_db()
-
 
 # @app.before_first_request
 # def create_tables():
@@ -69,26 +70,43 @@ db = sql_db()
 #     import_data.import_books()
 #     import_data.import_book_categories()
 
-
+# ---------------------------AUTH----------------------------
 auth_ns.add_resource(UserValidationResource.UserRegistration, '/registration')
 auth_ns.add_resource(UserValidationResource.UserLogin, '/login')
 auth_ns.add_resource(UserValidationResource.UserLogoutAccess, '/logout/access')
 auth_ns.add_resource(UserValidationResource.UserLogoutRefresh, '/logout/refresh')
 auth_ns.add_resource(UserValidationResource.TokenRefresh, '/token/refresh')
+
+# ----------------------------ADMIN---------------------------
 admin_ns.add_resource(UserValidationResource.GetAllUsers, '/getallusers')
 admin_ns.add_resource(UserValidationResource.SecretResource, '/secret')
 admin_ns.add_resource(UserValidationResource.GetAllUsers, '/delallusers')
+
+# ---------------------------BOOKS---------------------------
 books_ns.add_resource(BookResource.NewBook, '/new')
 books_ns.add_resource(BookResource.AllBooksByCategory, '/category')
 books_ns.add_resource(BookResource.TopBooks, '/top')
 books_ns.add_resource(BookResource.DetailsBook, '/details')
+books_ns.add_resource(BookResource.RatingsBook, '/ratings')
+
+# ---------------------------CATEGORIES---------------------------
 categories_ns.add_resource(CategoryResource.AllCategory, '/')
 categories_ns.add_resource(CategoryResource.PopularCategories, '/popular')
+
+# ---------------------------AUTHORS---------------------------
 authors_ns.add_resource(AuthorResource.TopAuthor, '/top')
-user_ns.add_resource(ActionResource.UserRating, '/book/rate')
-user_ns.add_resource(ActionResource.UserAdd, '/book/add')
-user_ns.add_resource(ActionResource.UserBorrow, '/book/borrow')
-user_ns.add_resource(ActionResource.UserBookList, '/books')
+
+# --------------------------WAREHOUSES---------------------------
+warehouses_ns.add_resource(WarehousesResource.WarehousesBook, '/book')
+warehouses_ns.add_resource(WarehousesResource.WarehousesEmail, '/email')
+
+# ---------------------------USER---------------------------
+user_ns.add_resource(UserResource.UserRate, '/rate')
+user_ns.add_resource(UserResource.UserLend, '/lend')
+user_ns.add_resource(UserResource.UserBorrow, '/borrow')
+user_ns.add_resource(UserResource.UserRatings, '/ratings')
+user_ns.add_resource(UserResource.UserLendings, '/lendings')
+user_ns.add_resource(UserResource.UserBorrowings, '/borrowings')
 
 
 if __name__ == '__main__':
