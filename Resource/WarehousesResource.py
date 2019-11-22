@@ -22,8 +22,8 @@ class WarehousesBook(Resource):
         if not v[0]:
             return {'message': v[1]}, 400
         book_details = v[1]
-        warehouses = book_details.book_warehouses
-        return jsonify([warehouse.as_dict() for warehouse in warehouses]), 200
+        warehouses = book_details.book_warehouse
+        return {'data': [warehouse.as_dict() for warehouse in warehouses]}, 200
 
 
 email_req = reqparse.RequestParser()
@@ -42,4 +42,4 @@ class WarehousesEmail(Resource):
             return {'message': v[1]}, 200
         user_details = v[1]
         warehouses = user_details.owner
-        return jsonify([warehouse.as_dict() for warehouse in warehouses]), 200
+        return {'data': [warehouse.as_dict() for warehouse in warehouses]}, 200
