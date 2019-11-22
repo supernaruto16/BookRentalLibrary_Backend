@@ -95,7 +95,7 @@ class BorrowDetails(db.Model):
     def find_by_borrower(cls, borrower_id, limit, page):
         return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
                                  cls.query.filter_by(borrower_id=borrower_id)
-                                 .limit(limit).offset((page-1) * limit)))}
+                                 .paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
     def get_total_num(cls):
@@ -143,7 +143,8 @@ class CategoryDetails(db.Model):
             CategoryDetails.category_name
         ).join(CategoryDetails)\
             .group_by(BookCategories.category_id)\
-            .order_by(desc('num_books')).limit(limit).offset((page - 1) * limit)
+            .order_by(desc('num_books'))\
+            .paginate(page=page, per_page=limit, error_out=False).items
 
 
 class UserTypeDetails(db.Model):
@@ -191,7 +192,7 @@ class BookWarehouse(db.Model):
     def find_by_owner(cls, owner_id, limit, page):
         return {'data': list(map(lambda x: BookWarehouse.as_dict(x),
                                  cls.query.filter_by(owner_id=owner_id)
-                                 .limit(limit).offset((page-1) * limit)))}
+                                 .paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
     def find_by_id(cls, warehouse_id):
@@ -227,7 +228,7 @@ class RatingDetails(db.Model):
     def find_by_book(cls, book_id, limit, page):
         return {'data': list(map(lambda x: RatingDetails.as_dict(x),
                                  cls.query.filter_by(book_id=book_id)
-                                 .limit(limit).offset((page-1) * limit)))}
+                                 .paginate(page=page, per_page=limit, error_out=False).items))}
 
     def save_to_db(self):
         db.session.add(self)
@@ -276,15 +277,21 @@ class BookDetails(db.Model):
 
     @classmethod
     def return_all(cls, limit, page):
-        return {'data': list(map(lambda x: cls.to_json(x), BookDetails.query.limit(limit).offset((page-1) * limit)))}
+        return {'data': list(map(lambda x: cls.to_json(x),
+                                 BookDetails.query.paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
     def return_new(cls, limit, page):
-        return BookDetails.query.join(AuthorDetails).order_by(desc(BookDetails.publication_year)).limit(limit).offset((page-1) * limit)
+        return BookDetails.query.join(AuthorDetails)\
+                                .order_by(desc(BookDetails.publication_year))\
+                                .limit(limit).offset((page-1) * limit)
 
     @classmethod
     def return_by_category(cls, category_id, limit, page):
-        return BookDetails.query.join(BookCategories).join(AuthorDetails).filter(BookCategories.category_id == category_id).limit(limit).offset((page - 1) * limit)
+        return BookDetails.query.join(BookCategories)\
+                                .join(AuthorDetails)\
+                                .filter(BookCategories.category_id == category_id)\
+                                .limit(limit).offset((page - 1) * limit)
 
     @classmethod
     def return_top_books(cls, limit, page):
@@ -329,7 +336,8 @@ class AuthorDetails(db.Model):
 
     @classmethod
     def return_all(cls, limit, page):
-        return {'data': list(map(lambda x: cls.to_json(x), AuthorDetails.query.limit(limit).offset((page-1) * limit)))}
+        return {'data': list(map(lambda x: cls.to_json(x),
+                                 AuthorDetails.query.paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
     def return_top(cls, limit, page):

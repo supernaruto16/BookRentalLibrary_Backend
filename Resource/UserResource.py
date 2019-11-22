@@ -122,7 +122,7 @@ class UserLendings(Resource):
 
 borrowings_parse = reqparse.RequestParser()
 borrowings_parse.add_argument('limit', type=int, default=5)
-borrowings_parse.add_argument('page', type=int, default=5)
+borrowings_parse.add_argument('page', type=int, default=1)
 
 
 class UserBorrowings(Resource):
