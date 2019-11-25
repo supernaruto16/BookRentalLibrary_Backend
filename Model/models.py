@@ -101,6 +101,18 @@ class BorrowDetails(db.Model):
                                  .paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
+    def find_borrowings_by_borrower(cls, borrower_id, limit, page):
+        return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
+                                 cls.query.filter_by(borrower_id=borrower_id, status=0)
+                                 .paginate(page=page, per_page=limit, error_out=False).items))}
+
+    @classmethod
+    def find_by_warehouse(cls, warehouse_id, limit, page):
+        return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
+                                 cls.query.filter_by(warehouse_id=warehouse_id)
+                                 .paginate(page=page, per_page=limit, error_out=False).items))}
+
+    @classmethod
     def get_total_num(cls):
         return cls.query.count()
 

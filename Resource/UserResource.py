@@ -159,6 +159,7 @@ class UserReturn(Resource):
 
         warehouse_details.status = 1
         borrow_details.status = 1
+        borrow_details.day_actual_return = datetime.date.today()
 
         warehouse_details.save_to_db()
         borrow_details.save_to_db()
@@ -192,7 +193,7 @@ class UserBorrowings(Resource):
     def get(self):
         data = borrowings_parse.parse_args()
         current_user = get_jwt_identity()
-        return BorrowDetails.find_by_borrower(current_user[1], data['limit'], data['page'])
+        return BorrowDetails.find_borrowings_by_borrower(current_user[1], data['limit'], data['page'])
 
 
 ratings_parse = reqparse.RequestParser()
@@ -208,3 +209,30 @@ class UserRatings(Resource):
         data = borrowings_parse.parse_args()
         current_user = get_jwt_identity()
         return RatingDetails.find_by_user(current_user[1], data['limit'], data['page'])
+
+
+transactions_parse = reqparse.RequestParser()
+transactions_parse.add_argument('mode', required=True)
+transactions_parse.add_argument('limit', type=int, default=5)
+transactions_parse.add_argument('page', type=int, default=1)
+
+
+class UserTransactions(Resource):
+    @jwt_required
+    @api.expect(transactions_parse)
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
+    @api.doc(params={'mode': "income | outcome"})
+    def get(self):
+        data = transactions_parse.parse_args()
+        current_user = get_jwt_identity()
+
+        if data['mode'] == 'outcome':
+            return BorrowDetails.find_by_borrower(current_user[1], data['limit'], data['page']), 200
+        elif data['mode'] == 'income':
+            warehouses = BookWarehouse.find_by_owner(current_user[1], None, None)
+            incomes = dict()
+            incomes['data'] = list()
+            for warehouse in warehouses:
+                sub_group = BorrowDetails.find_by_warehouse(warehouse.warehouse_id, None, None)
+                incomes['data'] = incomes['data'] + sub_group['data']
+            return incomes, 200
