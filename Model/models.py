@@ -25,6 +25,9 @@ class UserDetails(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+
     @classmethod
     def find_by_email(cls, email):
         return cls.query.filter_by(email=email).first()
@@ -80,9 +83,9 @@ class BorrowDetails(db.Model):
     day_borrow = db.Column(db.DateTime)
     day_expected_return = db.Column(db.DateTime)
     day_actual_return = db.Column(db.DateTime)
-    warning_id = db.Column(db.Integer)
+    warning_id = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
     address = db.Column(db.String(500))
-    status = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
+    status = db.Column(db.Integer)
 
     def save_to_db(self):
         db.session.add(self)

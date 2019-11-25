@@ -1,9 +1,19 @@
 from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from flask_restplus import Namespace, Resource, reqparse
 from Utils.InputValidation import *
+import datetime
 
 
 api = Namespace('user')
+
+
+class UserProfile(Resource):
+    @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
+    def get(self):
+        current_user = get_jwt_identity()
+        user_details = UserDetails.find_by_id(current_user[1])
+        return {'data': user_details.as_dict}, 200
 
 
 rating_req = reqparse.RequestParser()
@@ -14,6 +24,7 @@ rating_req.add_argument('rating_comment')
 
 class UserRate(Resource):
     @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(rating_req)
     def post(self):
         data = rating_req.parse_args()
@@ -25,9 +36,8 @@ class UserRate(Resource):
         if not v[0]:
             return {'message': 'Book does not exsit!'}, 400
 
-        # v = validate_existed_email(current_user)
-        # if not v[0]:
-        #     return {'message': 'User does not exist'}, 400
+        if data['rating_num'] < 0 or data['rating_num'] > 5:
+            return {'message': 'Rating num must be between 0 or 5'}, 400
 
         rating_details = RatingDetails(book_id=data['book_id'],
                                        user_id=current_user[1],
@@ -41,11 +51,11 @@ lend_req = reqparse.RequestParser()
 lend_req.add_argument('book_id', required=True)
 lend_req.add_argument('price', type=int, required=True)
 lend_req.add_argument('address', default="")
-lend_req.add_argument('time_upload')
 
 
 class UserLend(Resource):
     @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(lend_req)
     def post(self):
         data = lend_req.parse_args()
@@ -58,10 +68,14 @@ class UserLend(Resource):
         if not v[0]:
             return {'message': v[1]}, 400
 
+        if data['price'] < 0:
+            return {'message': 'price must be non-negative integer'}, 400
+
+        day_upload = datetime.date.today()
         book_warehouse = BookWarehouse(book_id=data['book_id'],
                                        owner_id=current_user[1],
                                        price=data['price'],
-                                       time_upload=data['time_upload'],
+                                       time_upload=day_upload,
                                        address=data['address'],
                                        is_validate=1,
                                        validator=1,
@@ -72,13 +86,13 @@ class UserLend(Resource):
 
 borrow_req = reqparse.RequestParser()
 borrow_req.add_argument('warehouse_id', type=int, required=True)
-borrow_req.add_argument('day_borrow')
-borrow_req.add_argument("day_expected_return")
+borrow_req.add_argument('num_days_borrow', type=int, required=True, default=5)
 borrow_req.add_argument("address", required=True)
 
 
 class UserBorrow(Resource):
     @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(borrow_req)
     def post(self):
         data = borrow_req.parse_args()
@@ -95,14 +109,59 @@ class UserBorrow(Resource):
         if not warehouse_details.status:
             return {'message': 'Book does not available'}, 400
 
+        if warehouse_details.owner_id == current_user[1]:
+            return {'message': 'Can not borrow your own book'}, 400
+
+        user_details = UserDetails.find_by_id(current_user[1])
+        if user_details.cash < warehouse_details.price:
+            return {'message': 'Not enough cash'}, 400
+
+        day_borrow = datetime.date.today()
+        day_expected_return = day_borrow + datetime.timedelta(days=data['num_days_borrow'])
         borrow_details = BorrowDetails(warehouse_id=data['warehouse_id'],
                                        borrower_id=current_user[1],
-                                       day_borrow=data['day_borrow'],
-                                       day_expected_return=data['day_expected_return'],
-                                       address=data['address'])
-        borrow_details.save_to_db()
+                                       day_borrow=day_borrow,
+                                       day_expected_return=day_expected_return,
+                                       address=data['address'],
+                                       status=0)
         warehouse_details.status = 0
+        user_details.cash -= warehouse_details.price
+        owner_details = UserDetails.find_by_id(warehouse_details.owner_id)
+        owner_details.cash += warehouse_details.price
+
+        user_details.save_to_db()
+        owner_details.save_to_db()
+        borrow_details.save_to_db()
         warehouse_details.save_to_db()
+        return {'message': 'success'}, 200
+
+
+return_req = reqparse.RequestParser()
+return_req.add_argument('borrow_id', type=int, required=True)
+return_req.add_argument('address', required=True)
+
+
+class UserReturn(Resource):
+    @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
+    @api.expect(return_req)
+    def post(self):
+        data = return_req.parse_args()
+        current_user = get_jwt_identity()
+        borrow_details = BorrowDetails.find_by_id(data['borrow_id'])
+        if not borrow_details:
+            return {'message': 'Invalid borrow id'}, 400
+        elif borrow_details.borrower_id != current_user[1] or borrow_details.status != 0:
+            return {'message': 'Invalid borrow id'}, 400
+        warehouse_details = BookWarehouse.find_by_id(borrow_details.warehouse_id)
+        if not warehouse_details:
+            return {'message': 'Invalid borrow id'}, 400
+
+        warehouse_details.status = 1
+        borrow_details.status = 1
+
+        warehouse_details.save_to_db()
+        borrow_details.save_to_db()
         return {'message': 'success'}, 200
 
 
@@ -113,6 +172,7 @@ lendings_parse.add_argument('page', type=int, default=1)
 
 class UserLendings(Resource):
     @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(lendings_parse)
     def get(self):
         data = lendings_parse.parse_args()
@@ -127,6 +187,7 @@ borrowings_parse.add_argument('page', type=int, default=1)
 
 class UserBorrowings(Resource):
     @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(borrowings_parse)
     def get(self):
         data = borrowings_parse.parse_args()
@@ -141,6 +202,7 @@ ratings_parse.add_argument('page', type=int, default=1)
 
 class UserRatings(Resource):
     @jwt_required
+    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(ratings_parse)
     def get(self):
         data = borrowings_parse.parse_args()

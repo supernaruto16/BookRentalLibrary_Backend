@@ -50,25 +50,27 @@ def check_if_token_in_blacklist(decrypted_token):
 api = Api(app, version='1.0', title='BookRental API',
           description='BookRental API')
 auth_ns = api.namespace('auth', description='Authentication API')
+admin_ns = api.namespace('admin', description='Admin API')
 books_ns = api.namespace('books', description='Books API')
-warehouses_ns = api.namespace('warehouses', description='Warehouses API')
-user_ns = api.namespace('user', description='User API')
 authors_ns = api.namespace('authors', description='Authors API')
 categories_ns = api.namespace('categories', description='Categories API')
-admin_ns = api.namespace('admin', description='Admin API')
+user_ns = api.namespace('user', description='User API')
+warehouses_ns = api.namespace('warehouses', description='Warehouses API')
 
 db = sql_db()
 
+
 # @app.before_first_request
-# def create_tables():
-#     print(db)
-#     db.create_all()
-#     import_data = ImportData(os.getcwd() + '/Model/data')
-#     import_data.import_user_type()
-#     import_data.import_authors()
-#     import_data.import_categories()
-#     import_data.import_books()
-#     import_data.import_book_categories()
+def create_tables():
+    print(db)
+    db.create_all()
+    import_data = ImportData(os.getcwd() + '/Model/data')
+    import_data.import_user_type()
+    import_data.import_authors()
+    import_data.import_categories()
+    import_data.import_books()
+    import_data.import_book_categories()
+
 
 # ---------------------------AUTH----------------------------
 auth_ns.add_resource(UserValidationResource.UserRegistration, '/registration')
@@ -101,9 +103,11 @@ warehouses_ns.add_resource(WarehousesResource.WarehousesBook, '/book')
 warehouses_ns.add_resource(WarehousesResource.WarehousesEmail, '/email')
 
 # ---------------------------USER---------------------------
+user_ns.add_resource(UserResource.UserProfile, '/profile')
 user_ns.add_resource(UserResource.UserRate, '/rate')
 user_ns.add_resource(UserResource.UserLend, '/lend')
 user_ns.add_resource(UserResource.UserBorrow, '/borrow')
+user_ns.add_resource(UserResource.UserReturn, '/return')
 user_ns.add_resource(UserResource.UserRatings, '/ratings')
 user_ns.add_resource(UserResource.UserLendings, '/lendings')
 user_ns.add_resource(UserResource.UserBorrowings, '/borrowings')
