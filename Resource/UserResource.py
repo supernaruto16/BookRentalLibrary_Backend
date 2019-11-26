@@ -7,16 +7,21 @@ import datetime
 api = Namespace('user')
 
 
+profile_parse = reqparse.RequestParser()
+profile_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+
+
 class UserProfile(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
+    @api.expect(profile_parse)
     def get(self):
         current_user = get_jwt_identity()
         user_details = UserDetails.find_by_id(current_user[1])
-        return {'data': user_details.as_dict}, 200
+        return {'data': user_details.as_dict()}, 200
 
 
 rating_req = reqparse.RequestParser()
+rating_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 rating_req.add_argument('book_id', required=True)
 rating_req.add_argument('rating_num', type=int, required=True)
 rating_req.add_argument('rating_comment')
@@ -24,7 +29,6 @@ rating_req.add_argument('rating_comment')
 
 class UserRate(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(rating_req)
     def post(self):
         data = rating_req.parse_args()
@@ -47,18 +51,18 @@ class UserRate(Resource):
         return {'message': 'success'}, 200
 
 
-lend_req = reqparse.RequestParser()
-lend_req.add_argument('book_id', required=True)
-lend_req.add_argument('price', type=int, required=True)
-lend_req.add_argument('address', default="")
+lend_parse = reqparse.RequestParser()
+lend_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+lend_parse.add_argument('book_id', required=True)
+lend_parse.add_argument('price', type=int, required=True)
+lend_parse.add_argument('address', default="")
 
 
 class UserLend(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
-    @api.expect(lend_req)
+    @api.expect(lend_parse)
     def post(self):
-        data = lend_req.parse_args()
+        data = lend_parse.parse_args()
         current_user = get_jwt_identity()
         # user_details = UserDetails.find_by_email(current_user)
         # if not user_details:
@@ -85,6 +89,7 @@ class UserLend(Resource):
 
 
 borrow_req = reqparse.RequestParser()
+borrow_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 borrow_req.add_argument('warehouse_id', type=int, required=True)
 borrow_req.add_argument('num_days_borrow', type=int, required=True, default=5)
 borrow_req.add_argument("address", required=True)
@@ -92,7 +97,6 @@ borrow_req.add_argument("address", required=True)
 
 class UserBorrow(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(borrow_req)
     def post(self):
         data = borrow_req.parse_args()
@@ -137,13 +141,13 @@ class UserBorrow(Resource):
 
 
 return_req = reqparse.RequestParser()
+return_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 return_req.add_argument('borrow_id', type=int, required=True)
 return_req.add_argument('address', required=True)
 
 
 class UserReturn(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(return_req)
     def post(self):
         data = return_req.parse_args()
@@ -167,13 +171,13 @@ class UserReturn(Resource):
 
 
 lendings_parse = reqparse.RequestParser()
+lendings_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 lendings_parse.add_argument('limit', type=int, default=5)
 lendings_parse.add_argument('page', type=int, default=1)
 
 
 class UserLendings(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(lendings_parse)
     def get(self):
         data = lendings_parse.parse_args()
@@ -182,13 +186,13 @@ class UserLendings(Resource):
 
 
 borrowings_parse = reqparse.RequestParser()
+borrowings_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 borrowings_parse.add_argument('limit', type=int, default=5)
 borrowings_parse.add_argument('page', type=int, default=1)
 
 
 class UserBorrowings(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(borrowings_parse)
     def get(self):
         data = borrowings_parse.parse_args()
@@ -197,13 +201,13 @@ class UserBorrowings(Resource):
 
 
 ratings_parse = reqparse.RequestParser()
+ratings_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 ratings_parse.add_argument('limit', type=int, default=5)
 ratings_parse.add_argument('page', type=int, default=1)
 
 
 class UserRatings(Resource):
     @jwt_required
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.expect(ratings_parse)
     def get(self):
         data = borrowings_parse.parse_args()
@@ -212,6 +216,7 @@ class UserRatings(Resource):
 
 
 transactions_parse = reqparse.RequestParser()
+transactions_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 transactions_parse.add_argument('mode', required=True)
 transactions_parse.add_argument('limit', type=int, default=5)
 transactions_parse.add_argument('page', type=int, default=1)
@@ -220,7 +225,6 @@ transactions_parse.add_argument('page', type=int, default=1)
 class UserTransactions(Resource):
     @jwt_required
     @api.expect(transactions_parse)
-    @api.doc(security=[{'oauth2': ['read', 'write']}])
     @api.doc(params={'mode': "income | outcome"})
     def get(self):
         data = transactions_parse.parse_args()
