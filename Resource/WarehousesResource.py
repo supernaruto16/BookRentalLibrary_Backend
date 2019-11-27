@@ -7,17 +7,16 @@ from Utils.InputValidation import *
 api = Namespace('warehouses')
 
 
-book_req = reqparse.RequestParser()
-book_req.add_argument('book_id', required=True)
-book_req.add_argument('limit', type=int, default=5)
-book_req.add_argument('page', type=int, default=1)
+book_parse = reqparse.RequestParser()
+book_parse.add_argument('book_id', required=True)
+book_parse.add_argument('limit', type=int, default=5)
+book_parse.add_argument('page', type=int, default=1)
 
 
 class WarehousesBook(Resource):
-    @jwt_required
-    @api.expect(book_req)
+    @api.expect(book_parse)
     def get(self):
-        data = book_req.parse_args()
+        data = book_parse.parse_args()
         v = validate_book_id(data['book_id'])
         if not v[0]:
             return {'message': v[1]}, 400
@@ -33,7 +32,6 @@ email_req.add_argument('page', type=int, default=1)
 
 
 class WarehousesEmail(Resource):
-    @jwt_required
     @api.expect(email_req)
     def get(self):
         data = email_req.parse_args()
