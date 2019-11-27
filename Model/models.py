@@ -1,7 +1,8 @@
 from sqlalchemy import desc, func
-
 from DB_Connection.db import sql_db
 from passlib.hash import pbkdf2_sha256 as sha256
+from Utils.SqlEscape import *
+
 
 db = sql_db()
 
@@ -26,7 +27,7 @@ class UserDetails(db.Model):
         db.session.commit()
 
     def as_dict(self):
-        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns if c.name != 'password'}
 
     @classmethod
     def find_by_email(cls, email):
@@ -281,6 +282,16 @@ class BookDetails(db.Model):
         return cls.query.filter_by(ISBN=isbn).first()
 
     @classmethod
+    def search_by_title(cls, title, limit, page):
+        return cls.query.filter(BookDetails.book_title.like('%' + escape_sqlalchemy_like(title) + '%'))\
+                        .paginate(page=page, per_page=limit, error_out=False).items
+
+    @classmethod
+    def search_by_isbn(cls, isbn, limit, page):
+        return cls.query.filter(BookDetails.ISBN.like('%' + escape_sqlalchemy_like(isbn) + '%'))\
+                        .paginate(page=page, per_page=limit, error_out=False).items
+
+    @classmethod
     def to_json(cls, x):
         return {
             'ISBN': x.ISBN,
@@ -299,14 +310,14 @@ class BookDetails(db.Model):
     def return_new(cls, limit, page):
         return BookDetails.query.join(AuthorDetails)\
                                 .order_by(desc(BookDetails.publication_year))\
-                                .limit(limit).offset((page-1) * limit)
+                                .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def return_by_category(cls, category_id, limit, page):
         return BookDetails.query.join(BookCategories)\
                                 .join(AuthorDetails)\
-                                .filter(BookCategories.category_id == category_id)\
-                                .limit(limit).offset((page - 1) * limit)
+                                .filter(BookCategories.category_id == category_id) \
+                                .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def get_book_details(cls, book_id):
@@ -353,6 +364,14 @@ class AuthorDetails(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+
+    @classmethod
+    def search_by_name(cls, name, limit, page):
+        return cls.query.filter(AuthorDetails.author_name.like('%' + escape_sqlalchemy_like(name) + '%'))\
+                        .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def to_json(cls, x):

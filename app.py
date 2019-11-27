@@ -6,7 +6,7 @@ from flask_jwt_extended import JWTManager
 from Model.RevokedTokenModel import RevokedTokenModel
 import json
 from Resource import UserValidationResource, BookResource, CategoryResource, AuthorResource, WarehousesResource, \
-    UserResource
+    UserResource, SearchResource
 from Model.import_data import ImportData
 import os
 from Model.models import UserDetails
@@ -54,6 +54,7 @@ admin_ns = api.namespace('admin', description='Admin API')
 books_ns = api.namespace('books', description='Books API')
 authors_ns = api.namespace('authors', description='Authors API')
 categories_ns = api.namespace('categories', description='Categories API')
+search_ns = api.namespace('search', description='Search API')
 user_ns = api.namespace('user', description='User API')
 warehouses_ns = api.namespace('warehouses', description='Warehouses API')
 
@@ -98,6 +99,9 @@ categories_ns.add_resource(CategoryResource.PopularCategories, '/popular')
 
 # ---------------------------AUTHORS---------------------------
 authors_ns.add_resource(AuthorResource.TopAuthor, '/top')
+
+# --------------------------SEARCH------------------------------------
+search_ns.add_resource(SearchResource.Search, '/')
 
 # --------------------------WAREHOUSES---------------------------
 warehouses_ns.add_resource(WarehousesResource.WarehousesBook, '/book')

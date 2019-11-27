@@ -1,5 +1,7 @@
 from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from flask_restplus import Namespace, Resource, reqparse
+from Model.models import *
+from Utils import AuthorizationDoc
 from Utils.InputValidation import *
 import datetime
 
@@ -14,6 +16,7 @@ profile_parse.add_argument('Authorization', type=str, location='headers', help='
 class UserProfile(Resource):
     @jwt_required
     @api.expect(profile_parse)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
         current_user = get_jwt_identity()
         user_details = UserDetails.find_by_id(current_user[1])
@@ -30,6 +33,7 @@ rating_req.add_argument('rating_comment')
 class UserRate(Resource):
     @jwt_required
     @api.expect(rating_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = rating_req.parse_args()
         current_user = get_jwt_identity()
@@ -61,6 +65,7 @@ lend_parse.add_argument('address', default="")
 class UserLend(Resource):
     @jwt_required
     @api.expect(lend_parse)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = lend_parse.parse_args()
         current_user = get_jwt_identity()
@@ -98,6 +103,7 @@ borrow_req.add_argument("address", required=True)
 class UserBorrow(Resource):
     @jwt_required
     @api.expect(borrow_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = borrow_req.parse_args()
         current_user = get_jwt_identity()
@@ -149,6 +155,7 @@ return_req.add_argument('address', required=True)
 class UserReturn(Resource):
     @jwt_required
     @api.expect(return_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = return_req.parse_args()
         current_user = get_jwt_identity()
@@ -179,6 +186,7 @@ lendings_parse.add_argument('page', type=int, default=1)
 class UserLendings(Resource):
     @jwt_required
     @api.expect(lendings_parse)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
         data = lendings_parse.parse_args()
         current_user = get_jwt_identity()
@@ -194,6 +202,7 @@ borrowings_parse.add_argument('page', type=int, default=1)
 class UserBorrowings(Resource):
     @jwt_required
     @api.expect(borrowings_parse)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
         data = borrowings_parse.parse_args()
         current_user = get_jwt_identity()
@@ -209,6 +218,7 @@ ratings_parse.add_argument('page', type=int, default=1)
 class UserRatings(Resource):
     @jwt_required
     @api.expect(ratings_parse)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
         data = borrowings_parse.parse_args()
         current_user = get_jwt_identity()
@@ -217,7 +227,7 @@ class UserRatings(Resource):
 
 transactions_parse = reqparse.RequestParser()
 transactions_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-transactions_parse.add_argument('mode', required=True)
+transactions_parse.add_argument('mode', type=str, choices=('income', 'outcome'), required=True)
 transactions_parse.add_argument('limit', type=int, default=5)
 transactions_parse.add_argument('page', type=int, default=1)
 
@@ -225,7 +235,7 @@ transactions_parse.add_argument('page', type=int, default=1)
 class UserTransactions(Resource):
     @jwt_required
     @api.expect(transactions_parse)
-    @api.doc(params={'mode': "income | outcome"})
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
         data = transactions_parse.parse_args()
         current_user = get_jwt_identity()
