@@ -222,6 +222,11 @@ class BookWarehouse(db.Model):
     def get_total_num(cls):
         return cls.query.count()
 
+    @classmethod
+    def get_new_books(cls, limit, page):
+        return {'data': list(map(lambda x: BookWarehouse.as_dict(x),
+                                 cls.query.paginate(page=page, per_page=limit, error_out=False).items))}
+
 
 class RatingDetails(db.Model):
     __tablename__ = 'rating_details'
@@ -245,6 +250,10 @@ class RatingDetails(db.Model):
         return {'data': list(map(lambda x: RatingDetails.as_dict(x),
                                  cls.query.filter_by(book_id=book_id)
                                  .paginate(page=page, per_page=limit, error_out=False).items))}
+
+    @classmethod
+    def find_existing(cls, user_id, book_id):
+        return cls.query.filter_by(user_id=user_id, book_id=book_id).first()
 
     def save_to_db(self):
         db.session.add(self)

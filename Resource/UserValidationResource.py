@@ -23,6 +23,8 @@ class UserRegistration(Resource):
     @api.expect(parse)
     def post(self):
         data = parse.parse_args()
+        data['first_name'] = html.escape(data['first_name'])
+        data['last_name'] = html.escape(data['last_name'])
         v = validate_new_email(data['email'])
         if not v[0]:
             return {'message': v[1]}, 400

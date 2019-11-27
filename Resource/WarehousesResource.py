@@ -41,3 +41,15 @@ class WarehousesEmail(Resource):
         user_details = v[1]
         warehouses = user_details.owner
         return {'data': [warehouse.as_dict() for warehouse in warehouses]}, 200
+
+
+new_req = reqparse.RequestParser()
+new_req.add_argument('limit', type=int, default=5)
+new_req.add_argument('page', type=int, default=1)
+
+
+class WarehouseNew(Resource):
+    @api.expect(new_req)
+    def get(self):
+        data = new_req.parse_args()
+        return BookWarehouse.get_new_books(data['limit'], data['page']), 200

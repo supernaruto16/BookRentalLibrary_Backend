@@ -106,6 +106,8 @@ search_ns.add_resource(SearchResource.Search, '/')
 # --------------------------WAREHOUSES---------------------------
 warehouses_ns.add_resource(WarehousesResource.WarehousesBook, '/book')
 warehouses_ns.add_resource(WarehousesResource.WarehousesEmail, '/email')
+warehouses_ns.add_resource(WarehousesResource.WarehouseNew, '/new')
+
 
 # ---------------------------USER---------------------------
 user_ns.add_resource(UserResource.UserProfile, '/profile')

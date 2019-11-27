@@ -4,18 +4,19 @@ from Model.models import *
 from Utils import AuthorizationDoc
 from Utils.InputValidation import *
 import datetime
+import html
 
 
 api = Namespace('user')
 
 
-profile_parse = reqparse.RequestParser()
-profile_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+profile_req = reqparse.RequestParser()
+profile_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 
 
 class UserProfile(Resource):
     @jwt_required
-    @api.expect(profile_parse)
+    @api.expect(profile_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
         current_user = get_jwt_identity()
@@ -25,9 +26,9 @@ class UserProfile(Resource):
 
 rating_req = reqparse.RequestParser()
 rating_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-rating_req.add_argument('book_id', required=True)
+rating_req.add_argument('book_id', type=str, required=True)
 rating_req.add_argument('rating_num', type=int, required=True)
-rating_req.add_argument('rating_comment')
+rating_req.add_argument('rating_comment', type=str, default='')
 
 
 class UserRate(Resource):
@@ -36,6 +37,7 @@ class UserRate(Resource):
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = rating_req.parse_args()
+        data['rating_comment'] = html.escape(data['rating_comment'])
         current_user = get_jwt_identity()
         # if not current_user:
         #     return {'message': 'You need login to rate this book', 'status': 'error'}, 401
@@ -47,27 +49,34 @@ class UserRate(Resource):
         if data['rating_num'] < 0 or data['rating_num'] > 5:
             return {'message': 'Rating num must be between 0 or 5'}, 400
 
-        rating_details = RatingDetails(book_id=data['book_id'],
-                                       user_id=current_user[1],
-                                       rating_num=data['rating_num'],
-                                       rating_comment=data['rating_comment'])
+        book_details = v[1]
+        rating_details = RatingDetails.find_existing(current_user[1], book_details.ISBN)
+        if not rating_details:
+            rating_details = RatingDetails(book_id=data['book_id'],
+                                           user_id=current_user[1],
+                                           rating_num=data['rating_num'],
+                                           rating_comment=data['rating_comment'])
+        else:
+            rating_details.rating_num = data['rating_num']
+            rating_details.rating_comment = data['rating_comment']
         rating_details.save_to_db()
         return {'message': 'success'}, 200
 
 
-lend_parse = reqparse.RequestParser()
-lend_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-lend_parse.add_argument('book_id', required=True)
-lend_parse.add_argument('price', type=int, required=True)
-lend_parse.add_argument('address', default="")
+lend_req = reqparse.RequestParser()
+lend_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+lend_req.add_argument('book_id', type=str, required=True)
+lend_req.add_argument('price', type=int, required=True)
+lend_req.add_argument('address', type=str, required=True)
 
 
 class UserLend(Resource):
     @jwt_required
-    @api.expect(lend_parse)
+    @api.expect(lend_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
-        data = lend_parse.parse_args()
+        data = lend_req.parse_args()
+        data['address'] = html.escape(data['address'])
         current_user = get_jwt_identity()
         # user_details = UserDetails.find_by_email(current_user)
         # if not user_details:
@@ -97,7 +106,7 @@ borrow_req = reqparse.RequestParser()
 borrow_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 borrow_req.add_argument('warehouse_id', type=int, required=True)
 borrow_req.add_argument('num_days_borrow', type=int, required=True, default=5)
-borrow_req.add_argument("address", required=True)
+borrow_req.add_argument("address", type=str, required=True)
 
 
 class UserBorrow(Resource):
@@ -106,6 +115,7 @@ class UserBorrow(Resource):
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = borrow_req.parse_args()
+        data['address'] = html.escape(data['address'])
         current_user = get_jwt_identity()
 
         # user_details = UserDetails.find_by_email(current_user)
@@ -149,7 +159,7 @@ class UserBorrow(Resource):
 return_req = reqparse.RequestParser()
 return_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 return_req.add_argument('borrow_id', type=int, required=True)
-return_req.add_argument('address', required=True)
+return_req.add_argument('address', type=str, required=True)
 
 
 class UserReturn(Resource):
@@ -158,6 +168,7 @@ class UserReturn(Resource):
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
         data = return_req.parse_args()
+        data['address'] = html.escape(data['address'])
         current_user = get_jwt_identity()
         borrow_details = BorrowDetails.find_by_id(data['borrow_id'])
         if not borrow_details:
@@ -177,67 +188,67 @@ class UserReturn(Resource):
         return {'message': 'success'}, 200
 
 
-lendings_parse = reqparse.RequestParser()
-lendings_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-lendings_parse.add_argument('limit', type=int, default=5)
-lendings_parse.add_argument('page', type=int, default=1)
+lendings_req = reqparse.RequestParser()
+lendings_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+lendings_req.add_argument('limit', type=int, default=5)
+lendings_req.add_argument('page', type=int, default=1)
 
 
 class UserLendings(Resource):
     @jwt_required
-    @api.expect(lendings_parse)
+    @api.expect(lendings_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
-        data = lendings_parse.parse_args()
+        data = lendings_req.parse_args()
         current_user = get_jwt_identity()
         return BookWarehouse.find_by_owner(current_user[1], data['limit'], data['page']), 200
 
 
-borrowings_parse = reqparse.RequestParser()
-borrowings_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-borrowings_parse.add_argument('limit', type=int, default=5)
-borrowings_parse.add_argument('page', type=int, default=1)
+borrowings_req = reqparse.RequestParser()
+borrowings_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+borrowings_req.add_argument('limit', type=int, default=5)
+borrowings_req.add_argument('page', type=int, default=1)
 
 
 class UserBorrowings(Resource):
     @jwt_required
-    @api.expect(borrowings_parse)
+    @api.expect(borrowings_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
-        data = borrowings_parse.parse_args()
+        data = borrowings_req.parse_args()
         current_user = get_jwt_identity()
         return BorrowDetails.find_borrowings_by_borrower(current_user[1], data['limit'], data['page'])
 
 
-ratings_parse = reqparse.RequestParser()
-ratings_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-ratings_parse.add_argument('limit', type=int, default=5)
-ratings_parse.add_argument('page', type=int, default=1)
+ratings_req = reqparse.RequestParser()
+ratings_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+ratings_req.add_argument('limit', type=int, default=5)
+ratings_req.add_argument('page', type=int, default=1)
 
 
 class UserRatings(Resource):
     @jwt_required
-    @api.expect(ratings_parse)
+    @api.expect(ratings_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
-        data = borrowings_parse.parse_args()
+        data = borrowings_req.parse_args()
         current_user = get_jwt_identity()
         return RatingDetails.find_by_user(current_user[1], data['limit'], data['page'])
 
 
-transactions_parse = reqparse.RequestParser()
-transactions_parse.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-transactions_parse.add_argument('mode', type=str, choices=('income', 'outcome'), required=True)
-transactions_parse.add_argument('limit', type=int, default=5)
-transactions_parse.add_argument('page', type=int, default=1)
+transactions_req = reqparse.RequestParser()
+transactions_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+transactions_req.add_argument('mode', type=str, choices=('income', 'outcome'), required=True)
+transactions_req.add_argument('limit', type=int, default=5)
+transactions_req.add_argument('page', type=int, default=1)
 
 
 class UserTransactions(Resource):
     @jwt_required
-    @api.expect(transactions_parse)
+    @api.expect(transactions_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
-        data = transactions_parse.parse_args()
+        data = transactions_req.parse_args()
         current_user = get_jwt_identity()
 
         if data['mode'] == 'outcome':

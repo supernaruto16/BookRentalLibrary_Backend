@@ -1,5 +1,6 @@
 from flask_restplus import Namespace, Resource, reqparse
 from Utils.InputValidation import *
+import html
 
 
 api = Namespace('search')
@@ -7,7 +8,7 @@ api = Namespace('search')
 
 search_parse = reqparse.RequestParser()
 search_parse.add_argument('mode', type=str, choices=('title', 'author', 'isbn'), required=True, default='title')
-search_parse.add_argument('text', type=str, required=True)
+search_parse.add_argument('text', type=str, default='')
 search_parse.add_argument('limit', type=int, default=5)
 search_parse.add_argument('page', type=int, default=1)
 
@@ -16,6 +17,7 @@ class Search(Resource):
     @api.expect(search_parse)
     def post(self):
         data = search_parse.parse_args()
+        data['text'] = html.escape(data['text'])
         response = dict()
         response['data'] = list()
 
