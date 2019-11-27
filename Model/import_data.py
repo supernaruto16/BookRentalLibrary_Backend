@@ -77,14 +77,14 @@ class ImportData:
                                                        category_id=category_id)
                         book_category.save_to_db()
 
-    # with open(ratings_json_path, 'r') as f:
-    #     lines = f.readlines()
-    #     total = len(lines)
-    #     book_details = BookDetails()
-    #     for i in range(len(lines)):
-    #         data = json.loads(lines[i])
-    #         print(f'[+] rating [{i+1}/{total}]')
-    #         rating_detail = RatingDetails(user_id=data['user_id'],
-    #                                       book_id=data['isbn13'],
-    #                                       rating_num=data['rating'])
-    #         rating_detail.save_to_db()
+    def import_rating_books(self):
+        with open(self.ratings_json_path, 'r') as f:
+            lines = f.readlines()
+            total = len(lines)
+            for i in range(len(lines)):
+                data = json.loads(lines[i])
+                print(f'[+] rating [{i+1}/{total}]')
+                rating_detail = RatingDetails(user_id=data['user_id'],
+                                              book_id=data['isbn13'],
+                                              rating_num=data['rating'])
+                rating_detail.save_to_db()

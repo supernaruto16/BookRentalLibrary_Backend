@@ -309,8 +309,20 @@ class BookDetails(db.Model):
                                 .limit(limit).offset((page - 1) * limit)
 
     @classmethod
+    def get_book_details(cls, book_id):
+        # book_id = html.escape(book_id)
+        book_details = BookDetails.query.filter_by(ISBN=book_id).join(AuthorDetails)
+        if not book_details:
+            return False, 'Book does not exist'
+        return True, book_details
+
+    @classmethod
     def return_top_books(cls, limit, page):
-        return cls.return_all(limit, page)
+        return BookDetails.query.paginate(page=page, per_page=limit, error_out=False).items
+        #     join(RatingDetails)\
+        # .limit(limit).offset((page - 1) * limit)
+        #     # .order_by(desc(RatingDetails.rating_num))\
+        # # return cls.return_all(limit, page)
 
 
 class BookCategories(db.Model):

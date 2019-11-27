@@ -6,7 +6,6 @@ from Utils.InputValidation import *
 
 api = Namespace('books')
 
-
 newbook_parse = reqparse.RequestParser()
 newbook_parse.add_argument('limit', type=int, default=5)
 newbook_parse.add_argument('page', type=int, default=1)
@@ -26,7 +25,7 @@ class NewBook(Resource):
                 'book_cover': x.book_cover,
                 'author': x.author_details.author_name
             },
-             BookDetails.return_new(int(data['limit']), int(data['page']))))
+                             BookDetails.return_new(int(data['limit']), int(data['page']))))
         }
         return new_book
 
@@ -51,8 +50,8 @@ class AllBooksByCategory(Resource):
                 'book_cover': x.book_cover,
                 'author': x.author_details.author_name
             },
-             BookDetails.return_by_category(int(data['category_id']), int(data['limit']),
-                                            int(data['page']))))
+                             BookDetails.return_by_category(int(data['category_id']), int(data['limit']),
+                                                            int(data['page']))))
         }
         return books
 
@@ -66,7 +65,21 @@ class TopBooks(Resource):
     @api.expect(top_parse)
     def get(self):
         data = top_parse.parse_args()
-        return BookDetails.return_top_books(int(data['limit']), int(data['page']))
+
+        books = {
+            'data': list(map(lambda x: {
+                'ISBN': x.ISBN,
+                'book_title': x.book_title,
+                'publication_year': x.publication_year,
+                'book_description': x.book_description,
+                'book_cover': x.book_cover,
+                'rating': list(map(lambda rating_ele: rating_ele.rating_num, x.ratings_details))
+            },
+                             BookDetails.return_top_books(int(data['limit']),
+                                                          int(data['page']))))
+        }
+        return books
+        # return BookDetails.return_top_books(int(data['limit']), int(data['page']))
 
 
 details_parse = reqparse.RequestParser()
@@ -77,23 +90,45 @@ class DetailsBook(Resource):
     @api.expect(details_parse)
     def get(self):
         data = details_parse.parse_args()
-        v = validate_book_id(data['book_id'])
+        v = BookDetails.get_book_details(data['book_id'])
         if not v[0]:
             return 'Book does not exist', 400
         book_details = v[1]
-        return book_details.as_dict(), 200
+        row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
+
+
+        books = {
+            'data': list(map(lambda x: {
+                'ISBN': x.ISBN,
+                'book_title': x.book_title,
+                'publication_year': x.publication_year,
+                'book_description': x.book_description,
+                'book_cover': x.book_cover,
+                'rating': list(map(lambda rating_ele: rating_ele.rating_num, x.ratings_details)),
+                'author': {
+                    'author_name': x.author_details.author_name,
+                    'author_id': x.author_details.author_id
+                }
+            },
+                            book_details))
+        }
+        return books, 200
+        # return row2dict(book_details), 200
 
 
 ratings_parse = reqparse.RequestParser()
 ratings_parse.add_argument('book_id', required=True)
+ratings_parse.add_argument('limit', type=int, default=5)
+ratings_parse.add_argument('page', type=int, default=1)
 
 
 class RatingsBook(Resource):
     @api.expect(ratings_parse)
     def get(self):
-        data = details_parse.parse_args()
+        data = ratings_parse.parse_args()
         v = validate_book_id(data['book_id'])
         if not v[0]:
             return 'Book does not exist', 400
         book_details = v[1]
-        return RatingDetails.find_by_book(book_details.book_id, data['limit'], data['page']), 200
+        print(data)
+        return RatingDetails.find_by_book(book_details.ISBN, data['limit'], data['page']), 200

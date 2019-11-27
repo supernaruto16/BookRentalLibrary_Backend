@@ -1,3 +1,5 @@
+import sys
+
 from flask_restplus import Namespace, Resource, reqparse
 from Model.models import UserDetails
 from Model.RevokedTokenModel import RevokedTokenModel
@@ -42,6 +44,8 @@ class UserRegistration(Resource):
                 'refresh_token': refresh_token
             }
         except:
+            e = sys.exc_info()[0]
+            print(f'Error : {e}')
             return {'message': 'Something went wrong'}, 500
 
 
