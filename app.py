@@ -32,6 +32,12 @@ app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
 app.config['JWT_BLACKLIST_ENABLED'] = True
 app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']
 
+# app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+# app.config['JWT_COOKIE_SECURE'] = False
+# app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
+# app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'
+# app.config['JWT_COOKIE_CSRF_PROTECT'] = True
+
 init(app)
 jwt = JWTManager(app)
 
@@ -50,7 +56,7 @@ def check_if_token_in_blacklist(decrypted_token):
 api = Api(app, version='1.0', title='BookRental API',
           description='BookRental API')
 auth_ns = api.namespace('auth', description='Authentication API')
-admin_ns = api.namespace('admin', description='Admin API')
+# admin_ns = api.namespace('admin', description='Admin API')
 books_ns = api.namespace('books', description='Books API')
 authors_ns = api.namespace('authors', description='Authors API')
 categories_ns = api.namespace('categories', description='Categories API')
@@ -82,9 +88,9 @@ auth_ns.add_resource(UserValidationResource.UserLogoutRefresh, '/logout/refresh'
 auth_ns.add_resource(UserValidationResource.TokenRefresh, '/token/refresh')
 
 # ----------------------------ADMIN---------------------------
-admin_ns.add_resource(UserValidationResource.GetAllUsers, '/getallusers')
-admin_ns.add_resource(UserValidationResource.SecretResource, '/secret')
-admin_ns.add_resource(UserValidationResource.GetAllUsers, '/delallusers')
+# admin_ns.add_resource(UserValidationResource.GetAllUsers, '/getallusers')
+# admin_ns.add_resource(UserValidationResource.SecretResource, '/secret')
+# admin_ns.add_resource(UserValidationResource.GetAllUsers, '/delallusers')
 
 # ---------------------------BOOKS---------------------------
 books_ns.add_resource(BookResource.NewBook, '/new')
@@ -118,7 +124,7 @@ user_ns.add_resource(UserResource.UserReturn, '/return')
 user_ns.add_resource(UserResource.UserRatings, '/ratings')
 user_ns.add_resource(UserResource.UserLendings, '/lendings')
 user_ns.add_resource(UserResource.UserBorrowings, '/borrowings')
-user_ns.add_resource(UserResource.UserTransactions, '/transactions')
+# user_ns.add_resource(UserResource.UserTransactions, '/transactions')
 
 
 if __name__ == '__main__':
