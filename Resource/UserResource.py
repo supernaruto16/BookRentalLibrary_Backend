@@ -95,6 +95,7 @@ class UserLend(Resource):
                                        price=data['price'],
                                        time_upload=day_upload,
                                        address=data['address'],
+                                       borrowed_times=0,
                                        is_validate=1,
                                        validator=1,
                                        status=1)
@@ -145,6 +146,7 @@ class UserBorrow(Resource):
                                        address=data['address'],
                                        status=0)
         warehouse_details.status = 0
+        warehouse_details.borrowed_times += 1
         user_details.cash -= warehouse_details.price
         owner_details = UserDetails.find_by_id(warehouse_details.owner_id)
         owner_details.cash += warehouse_details.price

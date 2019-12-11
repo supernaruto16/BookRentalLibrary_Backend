@@ -4,10 +4,17 @@ from Model.models import CategoryDetails
 
 api = Namespace('categories')
 
+all_req = reqparse.RequestParser()
+all_req.add_argument('limit', type=int, default=10)
+all_req.add_argument('page', type=int, default=1)
+
 
 class AllCategory(Resource):
+    @api.expect(all_req)
     def get(self):
-        all_categories = CategoryDetails.return_all()
+        data = all_req.parse_args()
+        all_categories = CategoryDetails.return_all(data['limit'], data['page'])
+
         return all_categories
 
 

@@ -148,8 +148,9 @@ class CategoryDetails(db.Model):
         }
 
     @classmethod
-    def return_all(cls):
-        return {'data': list(map(lambda x: cls.to_json(x), CategoryDetails.query.all()))}
+    def return_all(cls, limit, page):
+        return {'data': list(map(lambda x: cls.to_json(x),
+                                 CategoryDetails.query.paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
     def popular_categories(cls, limit, page):
@@ -191,6 +192,7 @@ class BookWarehouse(db.Model):
     price = db.Column(db.Integer)
     address = db.Column(db.String(200))
     time_upload = db.Column(db.DateTime)
+    borrowed_times = db.Column(db.Integer)
     borrow_details = db.relationship("BorrowDetails", backref="book_warehouse")
 
     def save_to_db(self):

@@ -22,7 +22,15 @@ class WarehousesBook(Resource):
             return {'message': v[1]}, 400
         book_details = v[1]
         warehouses = book_details.book_warehouse
-        return {'data': [warehouse.as_dict() for warehouse in warehouses]}, 200
+        res = []
+        for warehouse in warehouses:
+            res_each = dict()
+            res_each['warehouse_id'] = warehouse.warehouse_id
+            res_each['price'] = warehouse.price
+            res_each['borrowed_times'] = warehouse.borrowed_times
+            res_each['email'] = UserDetails.find_by_id(warehouse.owner_id).email
+            res.append(res_each)
+        return {'data': res}, 200
 
 
 email_req = reqparse.RequestParser()
