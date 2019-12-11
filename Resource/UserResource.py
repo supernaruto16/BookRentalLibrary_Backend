@@ -226,7 +226,26 @@ class UserLendings(Resource):
     def get(self):
         data = lendings_req.parse_args()
         current_user = get_jwt_identity()
-        return BookWarehouse.find_by_owner(current_user[1], data['limit'], data['page']), 200
+        res = dict()
+        res['data'] = []
+        warehouses_detail = BookWarehouse.find_by_owner(current_user[1], data['limit'], data['page'])
+        for each_warehouse in warehouses_detail['data']:
+            each_res = dict()
+            book = BookDetails.find_by_isbn(each_warehouse['book_id'])
+            author = AuthorDetails.find_by_id(book.author_id)
+            each_res['book_title'] = book.book_title
+            each_res['book_cover'] = book.book_cover
+            each_res['author'] = author.author_name
+            each_res['warehouse_id'] = each_warehouse['warehouse_id']
+            each_res['book_id'] = each_warehouse['book_id']
+            each_res['price'] = each_warehouse['price']
+            each_res['time_upload'] = each_warehouse['time_upload']
+            each_res['borrowed_times'] = each_warehouse['borrowed_times']
+            each_res['status'] = each_warehouse['status']
+            each_res['is_validate'] = each_warehouse['is_validate']
+            res['data'].append(each_res)
+        return res, 200
+
 
 
 borrowings_req = reqparse.RequestParser()
@@ -254,6 +273,7 @@ class UserBorrowings(Resource):
             each_res['borrowing_id'] = each_borrowing['borrow_id']
             each_res['borrowed_date'] = each_borrowing['day_borrow']
             each_res['book_title'] = book.book_title
+            each_res['book_cover'] = book.book_cover
             each_res['author'] = author.author_name
             each_res['owner'] = owner.email
             each_res['warehouse_id'] = warehouse.warehouse_id
