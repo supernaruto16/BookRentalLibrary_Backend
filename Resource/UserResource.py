@@ -24,19 +24,42 @@ class UserProfile(Resource):
         return {'data': user_details.as_dict()}, 200
 
 
-rating_req = reqparse.RequestParser()
-rating_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-rating_req.add_argument('book_id', type=str, required=True)
-rating_req.add_argument('rating_num', type=int, required=True)
-rating_req.add_argument('rating_comment', type=str, default='')
+rating_get_req = reqparse.RequestParser()
+rating_get_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+rating_get_req.add_argument('book_id', type=str, required=True)
+
+rating_post_req = reqparse.RequestParser()
+rating_post_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+rating_post_req.add_argument('book_id', type=str, required=True)
+rating_post_req.add_argument('rating_num', type=int, required=True)
+rating_post_req.add_argument('rating_comment', type=str, default='')
 
 
 class UserRate(Resource):
     @jwt_required
-    @api.expect(rating_req)
+    @api.expect(rating_get_req)
+    def get(self):
+        data = rating_get_req.parse_args()
+        current_user = get_jwt_identity()
+        v = validate_book_id(data['book_id'])
+        if not v[0]:
+            return {'message': 'Book does not exsit!'}, 400
+        book_details = v[1]
+        rating_details = RatingDetails.find_existing(current_user[1], book_details.ISBN)
+        if not rating_details:
+            return {
+                'data': {
+                    'rating_num': 0,
+                    'rating_comment': ''
+                 }
+            }, 200
+        return {'data': rating_details.as_dict()}, 200
+
+    @jwt_required
+    @api.expect(rating_post_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
-        data = rating_req.parse_args()
+        data = rating_post_req.parse_args()
         data['rating_comment'] = html.escape(data['rating_comment'])
         current_user = get_jwt_identity()
         # if not current_user:
@@ -46,8 +69,8 @@ class UserRate(Resource):
         if not v[0]:
             return {'message': 'Book does not exsit!'}, 400
 
-        if data['rating_num'] < 0 or data['rating_num'] > 5:
-            return {'message': 'Rating num must be between 0 or 5'}, 400
+        if data['rating_num'] <= 0 or data['rating_num'] > 5:
+            return {'message': 'Rating num must be between 1 or 5'}, 400
 
         book_details = v[1]
         rating_details = RatingDetails.find_existing(current_user[1], book_details.ISBN)

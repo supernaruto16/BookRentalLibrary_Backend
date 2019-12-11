@@ -126,9 +126,17 @@ class RatingsBook(Resource):
     @api.expect(ratings_parse)
     def get(self):
         data = ratings_parse.parse_args()
+        res = dict()
+        res['data'] = []
         v = validate_book_id(data['book_id'])
         if not v[0]:
             return 'Book does not exist', 400
         book_details = v[1]
-        print(data)
-        return RatingDetails.find_by_book(book_details.ISBN, data['limit'], data['page']), 200
+        rating_details = RatingDetails.find_by_book(book_details.ISBN, data['limit'], data['page'])
+        for each_rating in rating_details:
+            each_res = dict()
+            each_res['rating_num'] = each_rating['rating_num']
+            each_res['rating_comment'] = each_rating['rating_comment']
+            each_res['email'] = UserDetails.find_by_id(each_rating['user_id']).email
+            res['data'].append(each_res)
+        return res, 200

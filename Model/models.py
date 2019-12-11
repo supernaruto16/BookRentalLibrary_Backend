@@ -3,7 +3,6 @@ from DB_Connection.db import sql_db
 from passlib.hash import pbkdf2_sha256 as sha256
 from Utils.SqlEscape import *
 
-
 db = sql_db()
 
 
@@ -158,9 +157,9 @@ class CategoryDetails(db.Model):
             func.count(BookCategories.category_id).label('num_books'),
             CategoryDetails.category_id,
             CategoryDetails.category_name
-        ).join(CategoryDetails)\
-            .group_by(BookCategories.category_id)\
-            .order_by(desc('num_books'))\
+        ).join(CategoryDetails) \
+            .group_by(BookCategories.category_id) \
+            .order_by(desc('num_books')) \
             .paginate(page=page, per_page=limit, error_out=False).items
 
 
@@ -245,13 +244,13 @@ class RatingDetails(db.Model):
     def find_by_user(cls, user_id, limit, page):
         return {'data': list(map(lambda x: RatingDetails.as_dict(x),
                                  cls.query.filter_by(user_id=user_id)
-                                 .limit(limit).offset((page-1) * limit)))}
+                                 .limit(limit).offset((page - 1) * limit)))}
 
     @classmethod
     def find_by_book(cls, book_id, limit, page):
-        return {'data': list(map(lambda x: RatingDetails.as_dict(x),
-                                 cls.query.filter_by(book_id=book_id)
-                                 .paginate(page=page, per_page=limit, error_out=False).items))}
+        return list(map(lambda x: RatingDetails.as_dict(x),
+                        cls.query.filter_by(book_id=book_id)
+                        .paginate(page=page, per_page=limit, error_out=False).items))
 
     @classmethod
     def find_existing(cls, user_id, book_id):
@@ -294,13 +293,13 @@ class BookDetails(db.Model):
 
     @classmethod
     def search_by_title(cls, title, limit, page):
-        return cls.query.filter(BookDetails.book_title.like('%' + escape_sqlalchemy_like(title) + '%'))\
-                        .paginate(page=page, per_page=limit, error_out=False).items
+        return cls.query.filter(BookDetails.book_title.like('%' + escape_sqlalchemy_like(title) + '%')) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def search_by_isbn(cls, isbn, limit, page):
-        return cls.query.filter(BookDetails.ISBN.like('%' + escape_sqlalchemy_like(isbn) + '%'))\
-                        .paginate(page=page, per_page=limit, error_out=False).items
+        return cls.query.filter(BookDetails.ISBN.like('%' + escape_sqlalchemy_like(isbn) + '%')) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def to_json(cls, x):
@@ -319,16 +318,16 @@ class BookDetails(db.Model):
 
     @classmethod
     def return_new(cls, limit, page):
-        return BookDetails.query.join(AuthorDetails)\
-                                .order_by(desc(BookDetails.publication_year))\
-                                .paginate(page=page, per_page=limit, error_out=False).items
+        return BookDetails.query.join(AuthorDetails) \
+            .order_by(desc(BookDetails.publication_year)) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def return_by_category(cls, category_id, limit, page):
-        return BookDetails.query.join(BookCategories)\
-                                .join(AuthorDetails)\
-                                .filter(BookCategories.category_id == category_id) \
-                                .paginate(page=page, per_page=limit, error_out=False).items
+        return BookDetails.query.join(BookCategories) \
+            .join(AuthorDetails) \
+            .filter(BookCategories.category_id == category_id) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def get_book_details(cls, book_id):
@@ -381,8 +380,8 @@ class AuthorDetails(db.Model):
 
     @classmethod
     def search_by_name(cls, name, limit, page):
-        return cls.query.filter(AuthorDetails.author_name.like('%' + escape_sqlalchemy_like(name) + '%'))\
-                        .paginate(page=page, per_page=limit, error_out=False).items
+        return cls.query.filter(AuthorDetails.author_name.like('%' + escape_sqlalchemy_like(name) + '%')) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def to_json(cls, x):
