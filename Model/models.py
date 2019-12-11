@@ -375,6 +375,10 @@ class AuthorDetails(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    @classmethod
+    def find_by_id(cls, author_id):
+        return cls.query.filter_by(author_id=author_id).first()
+
     def as_dict(self):
         return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
 

@@ -242,7 +242,23 @@ class UserBorrowings(Resource):
     def get(self):
         data = borrowings_req.parse_args()
         current_user = get_jwt_identity()
-        return BorrowDetails.find_borrowings_by_borrower(current_user[1], data['limit'], data['page'])
+        res = dict()
+        res['data'] = []
+        borrowings_detail = BorrowDetails.find_borrowings_by_borrower(current_user[1], data['limit'], data['page'])
+        for each_borrowing in borrowings_detail['data']:
+            each_res = dict()
+            warehouse = BookWarehouse.find_by_id(each_borrowing['warehouse_id'])
+            book = BookDetails.find_by_isbn(warehouse.book_id)
+            author = AuthorDetails.find_by_id(book.author_id)
+            owner = UserDetails.find_by_id(warehouse.owner_id)
+            each_res['borrowing_id'] = each_borrowing['borrow_id']
+            each_res['borrowed_date'] = each_borrowing['day_borrow']
+            each_res['book_title'] = book.book_title
+            each_res['author'] = author.author_name
+            each_res['owner'] = owner.email
+            each_res['warehouse_id'] = warehouse.warehouse_id
+            res['data'].append(each_res)
+        return res, 200
 
 
 ratings_req = reqparse.RequestParser()
