@@ -24,6 +24,37 @@ class UserProfile(Resource):
         return {'data': user_details.as_dict()}, 200
 
 
+update_profile_req = reqparse.RequestParser()
+update_profile_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+update_profile_req.add_argument('first_name', type=str, default='')
+update_profile_req.add_argument('last_name', type=str, default='')
+update_profile_req.add_argument('new_password', type=str, default='')
+update_profile_req.add_argument('old_password', type=str, default='')
+
+
+class UserUpdateProfile(Resource):
+    @jwt_required
+    @api.expect(update_profile_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
+    def post(self):
+        data = transactions_req.parse_args()
+        current_user = get_jwt_identity()
+
+        user_details = UserDetails.find_by_id(current_user[1])
+        if 0 < len(data['new_password']) < 5:
+            return 'Password is too short', 400
+        if not user_details.verify_hash(data['old_password']):
+            return 'Wrong password', 400
+        if len(data['first_name']) > 0:
+            user_details.first_name = data['first_name']
+        if len(data['last_name']) > 0:
+            user_details.last_name = data['last_name']
+        if len(data['new_password']) > 0:
+            user_details.password = user_details.generate_hash(data['new_password'])
+        user_details.save_to_db()
+        return 'success', 200
+
+
 rating_get_req = reqparse.RequestParser()
 rating_get_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 rating_get_req.add_argument('book_id', type=str, required=True)
@@ -270,8 +301,9 @@ class UserBorrowings(Resource):
             book = BookDetails.find_by_isbn(warehouse.book_id)
             author = AuthorDetails.find_by_id(book.author_id)
             owner = UserDetails.find_by_id(warehouse.owner_id)
-            each_res['borrowing_id'] = each_borrowing['borrow_id']
-            each_res['borrowed_date'] = each_borrowing['day_borrow']
+            each_res['borrow_id'] = each_borrowing['borrow_id']
+            each_res['day_borrow'] = each_borrowing['day_borrow']
+            each_res['day_expected_return'] = each_borrowing['day_expected_return']
             each_res['book_title'] = book.book_title
             each_res['book_cover'] = book.book_cover
             each_res['author'] = author.author_name
@@ -322,3 +354,35 @@ class UserTransactions(Resource):
                 sub_group = BorrowDetails.find_by_warehouse(warehouse.warehouse_id, None, None)
                 incomes['data'] = incomes['data'] + sub_group['data']
             return incomes, 200
+
+
+update_profile_req = reqparse.RequestParser()
+update_profile_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+update_profile_req.add_argument('first_name', type=str, default='')
+update_profile_req.add_argument('last_name', type=str, default='')
+update_profile_req.add_argument('new_password', type=str, default='')
+update_profile_req.add_argument('old_password', type=str, default='')
+
+
+class UserUpdateProfile(Resource):
+    @jwt_required
+    @api.expect(transactions_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
+    def post(self):
+        data = transactions_req.parse_args()
+        current_user = get_jwt_identity()
+
+        user_details = UserDetails.find_by_id(current_user[1])
+        if 0 < len(data['new_password']) < 5:
+            return 'Password is too short', 400
+        if not user_details.verify_hash(data['old_password']):
+            return 'Wrong password', 400
+        if len(data['first_name']) > 0:
+            user_details.first_name = data['first_name']
+        if len(data['last_name']) > 0:
+            user_details.last_name = data['last_name']
+        if len(data['new_password']) > 0:
+            user_details.password = user_details.generate_hash(data['new_password'])
+        user_details.save_to_db()
+        return 'success', 200
+

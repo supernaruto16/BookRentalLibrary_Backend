@@ -72,12 +72,12 @@ def create_tables():
     print(db)
     db.create_all()
     import_data = ImportData(os.getcwd() + '/Model/data')
-    # import_data.import_user_type()
-    # import_data.import_authors()
-    # import_data.import_categories()
-    # import_data.import_books()
-    # import_data.import_book_categories()
-    import_data.import_rating_books()
+    import_data.import_user_type()
+    import_data.import_authors()
+    import_data.import_categories()
+    import_data.import_books()
+    import_data.import_book_categories()
+    # import_data.import_rating_books()
 
 
 # ---------------------------AUTH----------------------------
@@ -124,6 +124,7 @@ user_ns.add_resource(UserResource.UserReturn, '/return')
 user_ns.add_resource(UserResource.UserRatings, '/ratings')
 user_ns.add_resource(UserResource.UserLendings, '/lendings')
 user_ns.add_resource(UserResource.UserBorrowings, '/borrowings')
+user_ns.add_resource(UserResource.UserUpdateProfile, '/profile/update')
 # user_ns.add_resource(UserResource.UserTransactions, '/transactions')
 
 
