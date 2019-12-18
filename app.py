@@ -80,11 +80,13 @@ def create_tables():
     print(db)
     db.create_all()
     import_data = ImportData(os.getcwd() + '/Model/data')
-    import_data.import_user_type()
-    import_data.import_authors()
-    import_data.import_categories()
-    import_data.import_books()
-    import_data.import_book_categories()
+    # import_data.import_user_type()
+    # import_data.import_authors()
+    # import_data.import_categories()
+    # import_data.import_books()
+    # import_data.import_book_categories()
+    import_data.fix_book_image()
+    # import_data.import_user()
     # import_data.import_rating_books()
 
 
