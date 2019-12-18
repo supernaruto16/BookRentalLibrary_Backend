@@ -43,7 +43,7 @@ class UserUpdateProfile(Resource):
         user_details = UserDetails.find_by_id(current_user[1])
         if 0 < len(data['new_password']) < 5:
             return 'Password is too short', 400
-        if not user_details.verify_hash(data['old_password']):
+        if not user_details.verify_hash(data['old_password'], user_details.password):
             return 'Wrong password', 400
         if len(data['first_name']) > 0:
             user_details.first_name = data['first_name']

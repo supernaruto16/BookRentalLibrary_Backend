@@ -56,10 +56,11 @@ class ImportData:
     @staticmethod
     def fix_book_image():
         for book in BookDetails.query.all():
+            print(f'[+] Fix book: {book.ISBN}')
             size_idx = book.book_cover.rfind('/')
-            large_cover_url = book.book_cover[:size_idx-1] + 'l' + book.book_cover[size_idx:]
+            large_cover_url = book.book_cover[:size_idx - 1] + 'l' + book.book_cover[size_idx:]
             book.book_cover = large_cover_url
-            book.save_to_db()
+            book.save_to_db(force=True)
 
     def import_categories(self):
         with open(self.categories_json_path, 'r') as f:
@@ -110,7 +111,8 @@ class ImportData:
             for i in range(len(lines)):
                 data = json.loads(lines[i])
                 user_details = UserDetails.find_by_id(data['user_id'])
-                if not user_details:
+                rating_details = RatingDetails.find_existing(data['user_id'], data['isbn13'])
+                if not user_details or rating_details:
                     continue
                 print(f'[+] rating [{i + 1}/{total}]')
                 rating_detail = RatingDetails(user_id=data['user_id'],

@@ -273,8 +273,8 @@ class BookDetails(db.Model):
     ratings_details = db.relationship("RatingDetails", backref="book_details")
     book_warehouse = db.relationship("BookWarehouse", backref="book_details")
 
-    def save_to_db(self):
-        if not self.find_by_isbn(isbn=self.ISBN):
+    def save_to_db(self, force=False):
+        if force or not self.find_by_isbn(isbn=self.ISBN):
             db.session.add(self)
             db.session.commit()
             return True
