@@ -37,7 +37,7 @@ class UserUpdateProfile(Resource):
     @api.expect(update_profile_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def post(self):
-        data = transactions_req.parse_args()
+        data = update_profile_req. parse_args()
         current_user = get_jwt_identity()
 
         user_details = UserDetails.find_by_id(current_user[1])

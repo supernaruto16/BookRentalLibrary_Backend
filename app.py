@@ -75,7 +75,7 @@ warehouses_ns = api.namespace('warehouses', description='Warehouses API')
 db = sql_db()
 
 
-@app.before_first_request
+# @app.before_first_request
 def create_tables():
     print(db)
     db.create_all()
