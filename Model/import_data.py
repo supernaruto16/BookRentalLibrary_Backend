@@ -113,7 +113,7 @@ class ImportData:
                 user_details = UserDetails.find_by_id(data['user_id'])
                 rating_details = RatingDetails.find_existing(data['user_id'], data['isbn13'])
                 book_details = BookDetails.find_by_isbn(data['isbn13'])
-                if not user_details or rating_details:
+                if not book_details or not user_details or rating_details:
                     continue
                 print(f'[+] rating [{i + 1}/{total}]')
                 rating_detail = RatingDetails(user_id=data['user_id'],
