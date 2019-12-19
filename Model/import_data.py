@@ -129,6 +129,6 @@ class ImportData:
                                                              'condimentum ex. Aliquam cursus enim rhoncus elit '
                                                              'fringilla interdum. Proin scelerisque nec elit a '
                                                              'cursus.')
-                book_details.add_rating(data['rating_num'])
+                book_details.add_rating(data['rating'])
                 rating_detail.save_to_db()
                 book_details.save_to_db()
