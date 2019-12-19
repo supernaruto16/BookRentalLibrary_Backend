@@ -70,8 +70,6 @@ class TopBooks(Resource):
             'data': list(map(lambda x: {
                 'ISBN': x.ISBN,
                 'book_title': x.book_title,
-                'publication_year': x.publication_year,
-                'book_description': x.book_description,
                 'book_cover': x.book_cover,
                 'rating': list(map(lambda rating_ele: rating_ele.rating_num, x.ratings_details))
             },
@@ -139,4 +137,31 @@ class RatingsBook(Resource):
             each_res['rating_comment'] = each_rating['rating_comment']
             each_res['email'] = UserDetails.find_by_id(each_rating['user_id']).email
             res['data'].append(each_res)
+        return res, 200
+
+
+ratings_stat_req = reqparse.RequestParser()
+ratings_stat_req.add_argument('book_id', type=str, required=True)
+
+
+class RatingsStatBook(Resource):
+    @api.expect(ratings_stat_req)
+    def get(self):
+        data = ratings_stat_req.parse_args()
+        v = validate_book_id(data['book_id'])
+        if not v[0]:
+            return 'Book does not exist', 400
+        book_details = v[1]
+        res = dict()
+        res['data'] = dict()
+        total_sum, total_cnt = 0, 0
+        for i in range(1, 6):
+            cnt_rating = 'cnt_{num}star'.format(num=i)
+            cnt = getattr(book_details, cnt_rating)
+            res['data'][str(i)] = cnt
+            total_cnt += cnt
+            total_sum += cnt * i
+        res['data']['total_cnt'] = total_cnt
+        res['data']['total_sum'] = total_sum
+        res['data']['average_rating'] = round(total_sum / total_cnt, 2)
         return res, 200

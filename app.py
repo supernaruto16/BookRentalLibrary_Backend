@@ -87,7 +87,7 @@ def create_tables():
     # import_data.import_book_categories()
     # import_data.fix_book_image()
     # import_data.import_user()
-    import_data.import_rating_books()
+    # import_data.import_rating_books()
 
 
 # ---------------------------AUTH----------------------------
@@ -108,6 +108,7 @@ books_ns.add_resource(BookResource.AllBooksByCategory, '/category')
 books_ns.add_resource(BookResource.TopBooks, '/top')
 books_ns.add_resource(BookResource.DetailsBook, '/details')
 books_ns.add_resource(BookResource.RatingsBook, '/ratings')
+books_ns.add_resource(BookResource.RatingsStatBook, '/ratings/stat')
 
 # ---------------------------CATEGORIES---------------------------
 categories_ns.add_resource(CategoryResource.AllCategory, '/')

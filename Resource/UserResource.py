@@ -100,7 +100,7 @@ class UserRate(Resource):
         if not v[0]:
             return {'message': 'Book does not exsit!'}, 400
 
-        if data['rating_num'] <= 0 or data['rating_num'] > 5:
+        if not 1 <= int(data['rating_num']) <= 5:
             return {'message': 'Rating num must be between 1 or 5'}, 400
 
         book_details = v[1]
@@ -110,10 +110,14 @@ class UserRate(Resource):
                                            user_id=current_user[1],
                                            rating_num=data['rating_num'],
                                            rating_comment=data['rating_comment'])
+            book_details.add_rating(data['rating_num'])
         else:
+            if rating_details.rating_num != data['rating_num']:
+                book_details.swap_rating(rating_details.rating_num, data['rating_num'])
             rating_details.rating_num = data['rating_num']
             rating_details.rating_comment = data['rating_comment']
         rating_details.save_to_db()
+        book_details.save_to_db()
         return {'message': 'success'}, 200
 
 
@@ -159,9 +163,9 @@ class UserLend(Resource):
 
 borrow_req = reqparse.RequestParser()
 borrow_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-borrow_req.add_argument('warehouse_id', type=int, required=True)
-borrow_req.add_argument('num_days_borrow', type=int, required=True, default=5)
+borrow_req.add_argument('warehouse_id_list', type=list, required=True, location="json")
 borrow_req.add_argument("address", type=str, required=True)
+borrow_req.add_argument("phone", type=str, required=True)
 
 
 class UserBorrow(Resource):
@@ -176,39 +180,54 @@ class UserBorrow(Resource):
         # user_details = UserDetails.find_by_email(current_user)
         # if not user_details:
         #     return {'message': 'Email does not exist'}, 401
+        res = dict()
+        res['data'] = []
+        total_price = 0
+        for each_warehouse in data['warehouse_id_list']:
+            warehouse_details = BookWarehouse.find_by_id(each_warehouse['warehouse_id'])
+            if not warehouse_details:
+                res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
+                                    'message': 'Book does not exist'})
 
-        warehouse_details = BookWarehouse.find_by_id(data['warehouse_id'])
-        if not warehouse_details:
-            return {'message': 'Book does not exist'}, 400
+            if not warehouse_details.status:
+                res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
+                                    'message': 'Book is not available'})
 
-        if not warehouse_details.status:
-            return {'message': 'Book does not available'}, 400
-
-        if warehouse_details.owner_id == current_user[1]:
-            return {'message': 'Can not borrow your own book'}, 400
+            if warehouse_details.owner_id == current_user[1]:
+                res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
+                                    'message': 'Can not borrow your own book'})
+            total_price += warehouse_details.price * each_warehouse['num_days_borrow']
 
         user_details = UserDetails.find_by_id(current_user[1])
-        if user_details.cash < warehouse_details.price:
-            return {'message': 'Not enough cash'}, 400
+        if user_details.cash < total_price:
+            res['data'].append({'message': 'Not enough cash'})
+        if len(res['data']):
+            return res, 400
 
         day_borrow = datetime.date.today()
-        day_expected_return = day_borrow + datetime.timedelta(days=data['num_days_borrow'])
-        borrow_details = BorrowDetails(warehouse_id=data['warehouse_id'],
-                                       borrower_id=current_user[1],
-                                       day_borrow=day_borrow,
-                                       day_expected_return=day_expected_return,
-                                       address=data['address'],
-                                       status=0)
-        warehouse_details.status = 0
-        warehouse_details.borrowed_times += 1
-        user_details.cash -= warehouse_details.price
-        owner_details = UserDetails.find_by_id(warehouse_details.owner_id)
-        owner_details.cash += warehouse_details.price
+        for each_warehouse in data['warehouse_id_list']:
+            warehouse_details = BookWarehouse.find_by_id(each_warehouse['warehouse_id'])
+            day_expected_return = day_borrow + datetime.timedelta(days=each_warehouse['num_days_borrow'])
+            price = warehouse_details.price * each_warehouse['num_days_borrow']
 
-        user_details.save_to_db()
-        owner_details.save_to_db()
-        borrow_details.save_to_db()
-        warehouse_details.save_to_db()
+            borrow_details = BorrowDetails(warehouse_id=data['warehouse_id'],
+                                           borrower_id=current_user[1],
+                                           day_borrow=day_borrow,
+                                           day_expected_return=day_expected_return,
+                                           address=data['address'],
+                                           phone=data['phone'],
+                                           price=price,
+                                           status=0)
+            warehouse_details.status = 0
+            warehouse_details.borrowed_times += 1
+            user_details.cash -= price
+            owner_details = UserDetails.find_by_id(warehouse_details.owner_id)
+            owner_details.cash += price
+
+            user_details.save_to_db()
+            owner_details.save_to_db()
+            borrow_details.save_to_db()
+            warehouse_details.save_to_db()
         return {'message': 'success'}, 200
 
 
@@ -278,7 +297,6 @@ class UserLendings(Resource):
         return res, 200
 
 
-
 borrowings_req = reqparse.RequestParser()
 borrowings_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 borrowings_req.add_argument('limit', type=int, default=5)
@@ -304,6 +322,9 @@ class UserBorrowings(Resource):
             each_res['borrow_id'] = each_borrowing['borrow_id']
             each_res['day_borrow'] = each_borrowing['day_borrow']
             each_res['day_expected_return'] = each_borrowing['day_expected_return']
+            each_res['phone'] = each_borrowing['phone']
+            each_res['address'] = each_borrowing['address']
+            each_res['price'] = each_borrowing['price']
             each_res['book_title'] = book.book_title
             each_res['book_cover'] = book.book_cover
             each_res['author'] = author.author_name
@@ -324,7 +345,7 @@ class UserRatings(Resource):
     @api.expect(ratings_req)
     @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
     def get(self):
-        data = borrowings_req.parse_args()
+        data = ratings_req.parse_args()
         current_user = get_jwt_identity()
         return RatingDetails.find_by_user(current_user[1], data['limit'], data['page'])
 

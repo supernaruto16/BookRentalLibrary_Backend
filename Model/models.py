@@ -15,7 +15,7 @@ class UserDetails(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'), nullable=False)
-    cash = db.Column(db.Integer, nullable=False)
+    cash = db.Column(db.Integer, default=0)
     borrow_details = db.relationship("BorrowDetails", backref="user_details")
     owner = db.relationship("BookWarehouse", backref="owner_details", foreign_keys='BookWarehouse.owner_id')
     validator = db.relationship("BookWarehouse", backref="validator_details", foreign_keys='BookWarehouse.validator')
@@ -85,6 +85,8 @@ class BorrowDetails(db.Model):
     day_actual_return = db.Column(db.DateTime)
     warning_id = db.Column(db.Integer, db.ForeignKey('warning_details.warning_id'))
     address = db.Column(db.String(500))
+    phone = db.Column(db.String(32))
+    price = db.Column(db.Integer)
     status = db.Column(db.Integer)
 
     def save_to_db(self):
@@ -270,6 +272,11 @@ class BookDetails(db.Model):
     book_description = db.Column(db.TEXT)
     author_id = db.Column(db.Integer, db.ForeignKey("author_details.author_id"))
     book_cover = db.Column(db.String(200))
+    cnt_5star = db.Column(db.Integer, default=0)
+    cnt_4star = db.Column(db.Integer, default=0)
+    cnt_3star = db.Column(db.Integer, default=0)
+    cnt_2star = db.Column(db.Integer, default=0)
+    cnt_1star = db.Column(db.Integer, default=0)
     ratings_details = db.relationship("RatingDetails", backref="book_details")
     book_warehouse = db.relationship("BookWarehouse", backref="book_details")
 
@@ -344,6 +351,23 @@ class BookDetails(db.Model):
         # .limit(limit).offset((page - 1) * limit)
         #     # .order_by(desc(RatingDetails.rating_num))\
         # # return cls.return_all(limit, page)
+
+    def add_rating(self, rating_num):
+        rating_num = int(rating_num)
+        if not 1 <= rating_num <= 5:
+            return False
+        cnt_rating = 'cnt_{num}star'.format(num=rating_num)
+        setattr(self, cnt_rating, getattr(self, cnt_rating) + 1)
+
+    def swap_rating(self, old_rating, new_rating):
+        new_rating = int(new_rating)
+        if not 1 <= new_rating <= 5:
+            return False
+        cnt_old = 'cnt_{num}star'.format(num=old_rating)
+        cnt_new = 'cnt_{num}star'.format(num=new_rating)
+        setattr(self, cnt_old, getattr(self, cnt_old) - 1)
+        setattr(self, cnt_new, getattr(self, cnt_new) + 1)
+        return True
 
 
 class BookCategories(db.Model):

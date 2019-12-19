@@ -112,6 +112,7 @@ class ImportData:
                 data = json.loads(lines[i])
                 user_details = UserDetails.find_by_id(data['user_id'])
                 rating_details = RatingDetails.find_existing(data['user_id'], data['isbn13'])
+                book_details = BookDetails.find_by_id(data['isbn13'])
                 if not user_details or rating_details:
                     continue
                 print(f'[+] rating [{i + 1}/{total}]')
@@ -128,4 +129,6 @@ class ImportData:
                                                              'condimentum ex. Aliquam cursus enim rhoncus elit '
                                                              'fringilla interdum. Proin scelerisque nec elit a '
                                                              'cursus.')
+                book_details.add_rating(data['rating_num'])
                 rating_detail.save_to_db()
+                book_details.save_to_db()
