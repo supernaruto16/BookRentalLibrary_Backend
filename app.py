@@ -52,6 +52,7 @@ def check_if_token_in_blacklist(decrypted_token):
     jti = decrypted_token['jti']
     return RevokedTokenModel.is_jti_blacklisted(jti)
 
+
 @jwt.expired_token_loader
 def my_expired_token_callback(expired_token):
     token_type = expired_token['type']
@@ -60,6 +61,7 @@ def my_expired_token_callback(expired_token):
         'sub_status': 42,
         'msg': 'The {} token has expired'.format(token_type)
     }), 401
+
 
 api = Api(app, version='1.0', title='BookRental API',
           description='BookRental API')
@@ -126,7 +128,6 @@ search_ns.add_resource(SearchResource.Search, '/')
 warehouses_ns.add_resource(WarehousesResource.WarehousesBook, '/book')
 warehouses_ns.add_resource(WarehousesResource.WarehousesEmail, '/email')
 warehouses_ns.add_resource(WarehousesResource.WarehouseNew, '/new')
-
 
 # ---------------------------USER---------------------------
 user_ns.add_resource(UserResource.UserProfile, '/profile')
