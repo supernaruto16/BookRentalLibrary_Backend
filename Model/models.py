@@ -150,8 +150,12 @@ class CategoryDetails(db.Model):
 
     @classmethod
     def return_all(cls, limit, page):
-        return {'data': list(map(lambda x: cls.to_json(x),
-                                 CategoryDetails.query.paginate(page=page, per_page=limit, error_out=False).items))}
+        data = None
+        if limit == -1:
+            data = CategoryDetails.query.all()
+        else:
+            data = CategoryDetails.query.paginate(page=page, per_page=limit, error_out=False).items
+        return {'data': list(map(lambda x: cls.to_json(x), data))}
 
     @classmethod
     def popular_categories(cls, limit, page):

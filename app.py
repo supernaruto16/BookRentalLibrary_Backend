@@ -63,6 +63,8 @@ def my_expired_token_callback(expired_token):
 
 api = Api(app, version='1.0', title='BookRental API',
           description='BookRental API')
+jwt._set_error_handler_callbacks(api)
+
 auth_ns = api.namespace('auth', description='Authentication API')
 # admin_ns = api.namespace('admin', description='Admin API')
 books_ns = api.namespace('books', description='Books API')
