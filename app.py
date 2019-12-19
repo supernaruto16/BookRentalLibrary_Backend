@@ -89,9 +89,9 @@ def create_tables():
     # import_data.import_categories()
     # import_data.import_books()
     # import_data.import_book_categories()
-    # import_data.fix_book_image()
+    import_data.fix_book_image()
     # import_data.import_user()
-    import_data.import_rating_books()
+    # import_data.import_rating_books()
 
 
 # ---------------------------AUTH----------------------------

@@ -58,7 +58,11 @@ class ImportData:
         for book in BookDetails.query.all():
             print(f'[+] Fix book: {book.ISBN}')
             size_idx = book.book_cover.rfind('/')
-            large_cover_url = book.book_cover[:size_idx - 1] + 'l' + book.book_cover[size_idx:]
+            large_cover_url = ''
+            if "nophoto" in book.book_cover:
+                large_cover_url = book.book_cover[:size_idx - 1] + 'k' + book.book_cover[size_idx:]
+            else:
+                large_cover_url = book.book_cover[:size_idx - 1] + 'l' + book.book_cover[size_idx:]
             book.book_cover = large_cover_url
             book.save_to_db(force=True)
 
