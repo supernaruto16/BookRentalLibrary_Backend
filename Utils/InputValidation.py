@@ -1,4 +1,6 @@
-# from cerberus import Validator
+from cerberus import Validator
+from flask_restplus import ValidationError
+
 from Model.models import *
 import re
 import html
@@ -57,3 +59,25 @@ def validate_role(email, role):
         return False, 'Need %s authorization' % role
     return True,
 
+
+def validate_warehouse_id_list(value):
+    item_schema = {
+        'type': 'dict',
+        'schema': {
+            'warehouse_id': {'type': 'integer', 'required': True},
+            'num_days_borrow': {'type': 'integer', 'min': 1, 'required': True}
+        }
+    }
+    list_schema = {
+        'data': {
+            'type': 'list',
+            "schema": item_schema,
+            'required': True
+        }
+    }
+    wrap_value = {'data': value}
+    # print(wrap_value)
+    v = Validator(list_schema)
+    if v.validate(wrap_value):
+        return value
+    raise ValidationError("Missing or bad parameter in the warehouse_id list")

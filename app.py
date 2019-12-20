@@ -113,6 +113,7 @@ books_ns.add_resource(BookResource.TopBooks, '/top')
 books_ns.add_resource(BookResource.DetailsBook, '/details')
 books_ns.add_resource(BookResource.RatingsBook, '/ratings')
 books_ns.add_resource(BookResource.RatingsStatBook, '/ratings/stat')
+books_ns.add_resource(BookResource.DetailsCategoriesBook, '/details/categories')
 
 # ---------------------------CATEGORIES---------------------------
 categories_ns.add_resource(CategoryResource.AllCategory, '/')

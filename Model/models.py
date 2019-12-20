@@ -87,6 +87,7 @@ class BorrowDetails(db.Model):
     address = db.Column(db.String(500))
     phone = db.Column(db.String(32))
     price = db.Column(db.Integer)
+    payment_type = db.Column(db.String(64))
     status = db.Column(db.Integer)
 
     def save_to_db(self):
@@ -140,6 +141,10 @@ class CategoryDetails(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(category_id=id).first()
 
     @classmethod
     def to_json(cls, x):
@@ -386,6 +391,10 @@ class BookCategories(db.Model):
             db.session.commit()
             return True
         return False
+
+    @classmethod
+    def find_by_book_id(cls, book_id):
+        return cls.query.filter_by(book_id=book_id).all()
 
     @classmethod
     def check_dup(cls, book_id, category_id):

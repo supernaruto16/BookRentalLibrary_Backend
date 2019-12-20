@@ -163,9 +163,11 @@ class UserLend(Resource):
 
 borrow_req = reqparse.RequestParser()
 borrow_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-borrow_req.add_argument('warehouse_id_list', type=list, required=True, location="json")
+borrow_req.add_argument('warehouse_id_list', type=validate_warehouse_id_list, required=True, location="json",
+                        default='{"warehouse_id_list": [{"warehouse_id": "", "num_days_borrow": ""}, ]}')
 borrow_req.add_argument("address", type=str, required=True)
 borrow_req.add_argument("phone", type=str, required=True)
+borrow_req.add_argument("payment_type", type=str, required=True, choices=("cash"), default='cash')
 
 
 class UserBorrow(Resource):
@@ -183,24 +185,34 @@ class UserBorrow(Resource):
         res = dict()
         res['data'] = []
         total_price = 0
+        prev_id = -1
         for each_warehouse in data['warehouse_id_list']:
+            if each_warehouse['warehouse_id'] == prev_id:
+                res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
+                                    'message': 'Duplicate warehouse id'})
+                continue
+            prev_id = each_warehouse['warehouse_id']
             warehouse_details = BookWarehouse.find_by_id(each_warehouse['warehouse_id'])
             if not warehouse_details:
                 res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
-                                    'message': 'Book does not exist'})
+                                    'message': 'Warehouse does not exist'})
+                continue
 
             if not warehouse_details.status:
                 res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
                                     'message': 'Book is not available'})
+                continue
 
             if warehouse_details.owner_id == current_user[1]:
                 res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
                                     'message': 'Can not borrow your own book'})
+                continue
             total_price += warehouse_details.price * each_warehouse['num_days_borrow']
 
         user_details = UserDetails.find_by_id(current_user[1])
-        if user_details.cash < total_price:
-            res['data'].append({'message': 'Not enough cash'})
+        if data['payment_type'] == 'cash':
+            if user_details.cash < total_price:
+                res['data'].append({'message': 'Not enough cash'})
         if len(res['data']):
             return res, 400
 
@@ -217,10 +229,12 @@ class UserBorrow(Resource):
                                            address=data['address'],
                                            phone=data['phone'],
                                            price=price,
+                                           payment_type=data['payment_type'],
                                            status=0)
             warehouse_details.status = 0
             warehouse_details.borrowed_times += 1
-            user_details.cash -= price
+            if data['payment_type'] == 'cash':
+                user_details.cash -= price
             owner_details = UserDetails.find_by_id(warehouse_details.owner_id)
             owner_details.cash += price
 
@@ -325,6 +339,7 @@ class UserBorrowings(Resource):
             each_res['phone'] = each_borrowing['phone']
             each_res['address'] = each_borrowing['address']
             each_res['price'] = each_borrowing['price']
+            each_res['payment_type'] = each_borrowing['payment_type']
             each_res['book_title'] = book.book_title
             each_res['book_cover'] = book.book_cover
             each_res['author'] = author.author_name

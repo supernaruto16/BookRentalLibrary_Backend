@@ -165,3 +165,21 @@ class RatingsStatBook(Resource):
         res['data']['total_sum'] = total_sum
         res['data']['average_rating'] = round(total_sum / total_cnt, 2)
         return res, 200
+
+
+details_categories_req = reqparse.RequestParser()
+details_categories_req.add_argument('book_id', type=str, required=True)
+
+
+class DetailsCategoriesBook(Resource):
+    @api.expect(details_categories_req)
+    def get(self):
+        data = details_categories_req.parse_args()
+        v = validate_book_id(data['book_id'])
+        if not v[0]:
+            return 'Book does not exist', 400
+        book_details = v[1]
+        book_categories = BookCategories.find_by_book_id(book_details.ISBN)
+        return {
+            'data': [CategoryDetails.find_by_id(category.category_id).category_name for category in book_categories]
+        }, 200

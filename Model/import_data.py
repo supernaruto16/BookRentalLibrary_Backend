@@ -63,6 +63,7 @@ class ImportData:
                 large_cover_url = book.book_cover[:size_idx - 1] + 'k' + book.book_cover[size_idx:]
             else:
                 large_cover_url = book.book_cover[:size_idx - 1] + 'l' + book.book_cover[size_idx:]
+
             book.book_cover = large_cover_url
             book.save_to_db(force=True)
 
