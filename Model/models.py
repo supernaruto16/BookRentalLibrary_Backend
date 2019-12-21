@@ -222,7 +222,8 @@ class BookWarehouse(db.Model):
     @classmethod
     def find_by_owner(cls, owner_id, limit, page):
         return {'data': list(map(lambda x: BookWarehouse.as_dict(x),
-                                 cls.query.filter_by(owner_id=owner_id).order_by(desc('warehouse_id'))
+                                 cls.query.filter_by(owner_id=owner_id).filter(BookWarehouse.status.in_([0, 1]))
+                                 .order_by(desc('warehouse_id'))
                                  .paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod

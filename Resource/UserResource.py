@@ -203,7 +203,7 @@ class UserBorrow(Resource):
                                     'message': 'Warehouse does not exist'})
                 continue
 
-            if not warehouse_details.status:
+            if warehouse_details.status != 1:
                 res['data'].append({'warehouse_id': each_warehouse['warehouse_id'],
                                     'message': 'Book is not available'})
                 continue
@@ -457,3 +457,31 @@ class UserTransactions(Resource):
                     'status': each_borrow.status
                 })
             return res, 200
+
+
+remove_warehouse_req = reqparse.RequestParser()
+remove_warehouse_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+remove_warehouse_req.add_argument('warehouse_id', type=int, required=True)
+
+
+class UserRemoveWarehouse(Resource):
+    @jwt_required
+    @api.expect(remove_warehouse_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
+    def post(self):
+        data = remove_warehouse_req.parse_args()
+        current_user = get_jwt_identity()
+        warehouse_details = BookWarehouse.find_by_id(data['warehouse_id'])
+        if not warehouse_details.owner_id == current_user[1]:
+            return {'message': 'This book does not belong to you'}, 400
+        if warehouse_details.status == 0:
+            return {'message': 'This book has been borrowed'}, 400
+        if warehouse_details.status == 2:
+            return {'message': 'This book had been removed'}, 400
+        if warehouse_details.status == 1:
+            warehouse_details.status = 2
+            warehouse_details.save_to_db()
+
+        return {'message': 'success'}, 200
+
+
