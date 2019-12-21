@@ -24,12 +24,12 @@ class WarehousesBook(Resource):
         warehouses = book_details.book_warehouse
         res = []
         for warehouse in warehouses:
-            res_each = dict()
-            res_each['warehouse_id'] = warehouse.warehouse_id
-            res_each['price'] = warehouse.price
-            res_each['borrowed_times'] = warehouse.borrowed_times
-            res_each['email'] = UserDetails.find_by_id(warehouse.owner_id).email
-            res.append(res_each)
+            res.append({
+                'warehouse_id': warehouse.warehouse_id,
+                'price': warehouse.price,
+                'borrowed_times': warehouse.borrowed_times,
+                'email': warehouses.email,
+            })
         return {'data': res}, 200
 
 

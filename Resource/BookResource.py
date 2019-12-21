@@ -102,7 +102,6 @@ class DetailsBook(Resource):
                 'publication_year': x.publication_year,
                 'book_description': x.book_description,
                 'book_cover': x.book_cover,
-                'rating': list(map(lambda rating_ele: rating_ele.rating_num, x.ratings_details)),
                 'author': {
                     'author_name': x.author_details.author_name,
                     'author_id': x.author_details.author_id

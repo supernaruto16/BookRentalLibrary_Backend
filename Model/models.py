@@ -16,6 +16,8 @@ class UserDetails(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     user_type_id = db.Column(db.Integer, db.ForeignKey('user_type_details.user_type_id'), nullable=False)
     cash = db.Column(db.Integer, default=0)
+    outcome = db.Column(db.Integer, default=0)
+    income = db.Column(db.Integer, default=0)
     borrow_details = db.relationship("BorrowDetails", backref="user_details")
     owner = db.relationship("BookWarehouse", backref="owner_details", foreign_keys='BookWarehouse.owner_id')
     validator = db.relationship("BookWarehouse", backref="validator_details", foreign_keys='BookWarehouse.validator')
@@ -99,21 +101,21 @@ class BorrowDetails(db.Model):
 
     @classmethod
     def find_by_borrower(cls, borrower_id, limit, page):
-        return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
-                                 cls.query.filter_by(borrower_id=borrower_id)
-                                 .paginate(page=page, per_page=limit, error_out=False).items))}
+        return cls.query.join(BookWarehouse).join(BookDetails).join(AuthorDetails) \
+            .filter(borrower_id == borrower_id).order_by(desc('borrow_id')) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def find_borrowings_by_borrower(cls, borrower_id, limit, page):
         return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
-                                 cls.query.filter_by(borrower_id=borrower_id, status=0)
+                                 cls.query.filter_by(borrower_id=borrower_id, status=0).order_by(desc('borrow_id'))
                                  .paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
-    def find_by_warehouse(cls, warehouse_id, limit, page):
-        return {'data': list(map(lambda x: BorrowDetails.as_dict(x),
-                                 cls.query.filter_by(warehouse_id=warehouse_id)
-                                 .paginate(page=page, per_page=limit, error_out=False).items))}
+    def find_by_owner(cls, owner_id, limit, page):
+        return cls.query.join(BookWarehouse).join(UserDetails).join(BookDetails) \
+            .filter(UserDetails.user_id == owner_id).order_by(desc('borrow_id')) \
+            .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
     def get_total_num(cls):
@@ -286,6 +288,7 @@ class BookDetails(db.Model):
     cnt_3star = db.Column(db.Integer, default=0)
     cnt_2star = db.Column(db.Integer, default=0)
     cnt_1star = db.Column(db.Integer, default=0)
+    cnt_available = db.Column(db.Integer, default=0)
     ratings_details = db.relationship("RatingDetails", backref="book_details")
     book_warehouse = db.relationship("BookWarehouse", backref="book_details")
 
@@ -377,6 +380,14 @@ class BookDetails(db.Model):
         setattr(self, cnt_old, getattr(self, cnt_old) - 1)
         setattr(self, cnt_new, getattr(self, cnt_new) + 1)
         return True
+
+    def get_average_rating(self):
+        total_sum, total_cnt = 0, 0
+        for i in range(1, 6):
+            cnt_rating = 'cnt_{num}star'.format(num=i)
+            total_cnt += getattr(self, cnt_rating)
+            total_sum += getattr(self, cnt_rating) * i
+        return round(total_sum / total_cnt, 2)
 
 
 class BookCategories(db.Model):

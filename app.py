@@ -140,7 +140,7 @@ user_ns.add_resource(UserResource.UserRatings, '/ratings')
 user_ns.add_resource(UserResource.UserLendings, '/lendings')
 user_ns.add_resource(UserResource.UserBorrowings, '/borrowings')
 user_ns.add_resource(UserResource.UserUpdateProfile, '/profile/update')
-# user_ns.add_resource(UserResource.UserTransactions, '/transactions')
+user_ns.add_resource(UserResource.UserTransactions, '/transactions')
 
 
 if __name__ == '__main__':

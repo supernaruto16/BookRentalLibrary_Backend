@@ -3,6 +3,7 @@ from flask_restplus import Namespace, Resource, reqparse
 from Model.models import *
 from Utils import AuthorizationDoc
 from Utils.InputValidation import *
+from Utils.ES_Connection import *
 import datetime
 import html
 
@@ -118,6 +119,7 @@ class UserRate(Resource):
             rating_details.rating_comment = data['rating_comment']
         rating_details.save_to_db()
         book_details.save_to_db()
+        update_ratings_book(book_details.ISBN, book_details.get_average_rating())
         return {'message': 'success'}, 200
 
 
@@ -143,11 +145,11 @@ class UserLend(Resource):
         v = validate_book_id(data['book_id'])
         if not v[0]:
             return {'message': v[1]}, 400
-
+        book_details = v[1]
         if data['price'] < 0:
             return {'message': 'price must be non-negative integer'}, 400
 
-        day_upload = datetime.date.today()
+        day_upload = datetime.datetime.now()
         book_warehouse = BookWarehouse(book_id=data['book_id'],
                                        owner_id=current_user[1],
                                        price=data['price'],
@@ -157,7 +159,10 @@ class UserLend(Resource):
                                        is_validate=1,
                                        validator=1,
                                        status=1)
+        book_details.cnt_available += 1
         book_warehouse.save_to_db()
+        book_details.save_to_db()
+        update_lenders_book(book_details.ISBN, book_details.cnt_available)
         return {'message': 'success'}, 200
 
 
@@ -167,7 +172,7 @@ borrow_req.add_argument('warehouse_id_list', type=validate_warehouse_id_list, re
                         default='{"warehouse_id_list": [{"warehouse_id": "", "num_days_borrow": ""}, ]}')
 borrow_req.add_argument("address", type=str, required=True)
 borrow_req.add_argument("phone", type=str, required=True)
-borrow_req.add_argument("payment_type", type=str, required=True, choices=("cash"), default='cash')
+borrow_req.add_argument("payment_type", type=str, required=True, choices=("cash", "paypal"), default='cash')
 
 
 class UserBorrow(Resource):
@@ -213,16 +218,18 @@ class UserBorrow(Resource):
         if data['payment_type'] == 'cash':
             if user_details.cash < total_price:
                 res['data'].append({'message': 'Not enough cash'})
+
         if len(res['data']):
             return res, 400
 
-        day_borrow = datetime.date.today()
+        day_borrow = datetime.datetime.now()
         for each_warehouse in data['warehouse_id_list']:
             warehouse_details = BookWarehouse.find_by_id(each_warehouse['warehouse_id'])
+            book_details = BookDetails.find_by_isbn(warehouse_details.book_id)
             day_expected_return = day_borrow + datetime.timedelta(days=each_warehouse['num_days_borrow'])
             price = warehouse_details.price * each_warehouse['num_days_borrow']
 
-            borrow_details = BorrowDetails(warehouse_id=data['warehouse_id'],
+            borrow_details = BorrowDetails(warehouse_id=each_warehouse['warehouse_id'],
                                            borrower_id=current_user[1],
                                            day_borrow=day_borrow,
                                            day_expected_return=day_expected_return,
@@ -235,13 +242,18 @@ class UserBorrow(Resource):
             warehouse_details.borrowed_times += 1
             if data['payment_type'] == 'cash':
                 user_details.cash -= price
+            user_details.outcome += price
             owner_details = UserDetails.find_by_id(warehouse_details.owner_id)
             owner_details.cash += price
+            owner_details.income += price
+            book_details.cnt_available -= 1
 
             user_details.save_to_db()
             owner_details.save_to_db()
             borrow_details.save_to_db()
             warehouse_details.save_to_db()
+            book_details.save_to_db()
+            update_lenders_book(book_details.ISBN, book_details.cnt_available)
         return {'message': 'success'}, 200
 
 
@@ -268,12 +280,16 @@ class UserReturn(Resource):
         if not warehouse_details:
             return {'message': 'Invalid borrow id'}, 400
 
+        book_details = BookDetails.find_by_isbn(warehouse_details.book_id)
         warehouse_details.status = 1
         borrow_details.status = 1
-        borrow_details.day_actual_return = datetime.date.today()
+        borrow_details.day_actual_return = datetime.datetime.now()
+        book_details.cnt_available += 1
 
         warehouse_details.save_to_db()
         borrow_details.save_to_db()
+        book_details.save_to_db()
+        update_lenders_book(book_details.ISBN, book_details.cnt_available)
         return {'message': 'success'}, 200
 
 
@@ -303,7 +319,7 @@ class UserLendings(Resource):
             each_res['warehouse_id'] = each_warehouse['warehouse_id']
             each_res['book_id'] = each_warehouse['book_id']
             each_res['price'] = each_warehouse['price']
-            each_res['time_upload'] = each_warehouse['time_upload']
+            each_res['time_upload'] = each_warehouse['time_upload'].isoformat() if each_warehouse['time_upload'] else None
             each_res['borrowed_times'] = each_warehouse['borrowed_times']
             each_res['status'] = each_warehouse['status']
             each_res['is_validate'] = each_warehouse['is_validate']
@@ -334,8 +350,8 @@ class UserBorrowings(Resource):
             author = AuthorDetails.find_by_id(book.author_id)
             owner = UserDetails.find_by_id(warehouse.owner_id)
             each_res['borrow_id'] = each_borrowing['borrow_id']
-            each_res['day_borrow'] = each_borrowing['day_borrow']
-            each_res['day_expected_return'] = each_borrowing['day_expected_return']
+            each_res['day_borrow'] = each_borrowing['day_borrow'].isoformat()
+            each_res['day_expected_return'] = each_borrowing['day_expected_return'].isoformat()
             each_res['phone'] = each_borrowing['phone']
             each_res['address'] = each_borrowing['address']
             each_res['price'] = each_borrowing['price']
@@ -367,7 +383,7 @@ class UserRatings(Resource):
 
 transactions_req = reqparse.RequestParser()
 transactions_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
-transactions_req.add_argument('mode', type=str, choices=('income', 'outcome'), required=True)
+transactions_req.add_argument('mode', type=str, choices=('income', 'outcome'), default="outcome", required=True)
 transactions_req.add_argument('limit', type=int, default=5)
 transactions_req.add_argument('page', type=int, default=1)
 
@@ -380,13 +396,46 @@ class UserTransactions(Resource):
         data = transactions_req.parse_args()
         current_user = get_jwt_identity()
 
+        res = dict()
+        res['data'] = dict()
+        user_details = UserDetails.find_by_id(current_user[1])
+
         if data['mode'] == 'outcome':
-            return BorrowDetails.find_by_borrower(current_user[1], data['limit'], data['page']), 200
+            res['data']['total'] = user_details.outcome
+            res['data']['details'] = []
+            borrow_details = BorrowDetails.find_by_borrower(current_user[1], data['limit'], data['page'])
+            for each_borrow in borrow_details:
+                res['data']['details'].append({
+                    'ISBN': each_borrow.book_warehouse.book_details.ISBN,
+                    'book_title': each_borrow.book_warehouse.book_details.book_title,
+                    'book_cover': each_borrow.book_warehouse.book_details.book_cover,
+                    'author': each_borrow.book_warehouse.book_details.author_details.author_name,
+                    'day_borrow': each_borrow.day_borrow.isoformat() if each_borrow.day_borrow else '',
+                    'day_expected_return': each_borrow.day_expected_return.isoformat() if each_borrow.day_expected_return else None,
+                    'day_actual_return': each_borrow.day_actual_return.isoformat() if each_borrow.day_actual_return else None,
+                    'phone': each_borrow.phone,
+                    'address': each_borrow.address,
+                    'price': each_borrow.price,
+                    'payment_type': each_borrow.payment_type,
+                    'status': each_borrow.status
+                })
+            return res, 200
         elif data['mode'] == 'income':
-            warehouses = BookWarehouse.find_by_owner(current_user[1], None, None)
-            incomes = dict()
-            incomes['data'] = list()
-            for warehouse in warehouses:
-                sub_group = BorrowDetails.find_by_warehouse(warehouse.warehouse_id, None, None)
-                incomes['data'] = incomes['data'] + sub_group['data']
-            return incomes, 200
+            res['data']['total'] = user_details.income
+            res['data']['details'] = []
+            borrow_details = BorrowDetails.find_by_owner(current_user[1], data['limit'], data['page'])
+            for each_borrow in borrow_details:
+                res['data']['details'].append({
+                    'ISBN': each_borrow.book_details.ISBN,
+                    'book_title': each_borrow.book_details.book_title,
+                    'book_cover': each_borrow.book_details.book_cover,
+                    'author': each_borrow.author_details.author_name,
+                    'day_borrow': each_borrow.day_borrow,
+                    'day_expected_return': each_borrow.day_expected_return,
+                    'day_actual_return': each_borrow.day_actual_return,
+                    'phone': each_borrow.phone,
+                    'address': each_borrow.address,
+                    'price': each_borrow.price,
+                    'payment_type': each_borrow.payment_type
+                })
+            return res, 200
