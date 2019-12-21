@@ -350,8 +350,8 @@ class UserBorrowings(Resource):
             author = AuthorDetails.find_by_id(book.author_id)
             owner = UserDetails.find_by_id(warehouse.owner_id)
             each_res['borrow_id'] = each_borrowing['borrow_id']
-            each_res['day_borrow'] = each_borrowing['day_borrow'].isoformat()
-            each_res['day_expected_return'] = each_borrowing['day_expected_return'].isoformat()
+            each_res['day_borrow'] = each_borrowing['day_borrow']
+            each_res['day_expected_return'] = each_borrowing['day_expected_return']
             each_res['phone'] = each_borrowing['phone']
             each_res['address'] = each_borrowing['address']
             each_res['price'] = each_borrowing['price']
@@ -410,9 +410,9 @@ class UserTransactions(Resource):
                     'book_title': each_borrow.book_warehouse.book_details.book_title,
                     'book_cover': each_borrow.book_warehouse.book_details.book_cover,
                     'author': each_borrow.book_warehouse.book_details.author_details.author_name,
-                    'day_borrow': each_borrow.day_borrow.isoformat() if each_borrow.day_borrow else '',
-                    'day_expected_return': each_borrow.day_expected_return.isoformat() if each_borrow.day_expected_return else None,
-                    'day_actual_return': each_borrow.day_actual_return.isoformat() if each_borrow.day_actual_return else None,
+                    'day_borrow': str(each_borrow.day_borrow),
+                    'day_expected_return': str(each_borrow.day_expected_return),
+                    'day_actual_return': str(each_borrow.day_actual_return),
                     'phone': each_borrow.phone,
                     'address': each_borrow.address,
                     'price': each_borrow.price,
@@ -432,9 +432,9 @@ class UserTransactions(Resource):
                     'book_cover': each_borrow.book_warehouse.book_details.book_cover,
                     'author': each_borrow.book_warehouse.book_details.author_details.author_name,
                     'borrower_email': borrower_details.email,
-                    'day_borrow': each_borrow.day_borrow.isoformat() if each_borrow.day_borrow else '',
-                    'day_expected_return': each_borrow.day_expected_return.isoformat() if each_borrow.day_expected_return else None,
-                    'day_actual_return': each_borrow.day_actual_return.isoformat() if each_borrow.day_actual_return else None,
+                    'day_borrow': str(each_borrow.day_borrow),
+                    'day_expected_return': str(each_borrow.day_expected_return),
+                    'day_actual_return': str(each_borrow.day_actual_return),
                     'phone': each_borrow.phone,
                     'address': each_borrow.address,
                     'price': each_borrow.price,
