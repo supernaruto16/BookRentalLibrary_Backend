@@ -28,7 +28,8 @@ class WarehousesBook(Resource):
                 'warehouse_id': warehouse.warehouse_id,
                 'price': warehouse.price,
                 'borrowed_times': warehouse.borrowed_times,
-                'email': warehouses.email,
+                'email': warehouse.email,
+                'status': warehouse.status,
             })
         return {'data': res}, 200
 
