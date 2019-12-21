@@ -360,7 +360,8 @@ class BookDetails(db.Model):
 
     @classmethod
     def return_top_books(cls, limit, page):
-        return BookDetails.query.orderby().paginate(page=page, per_page=limit, error_out=False).items
+        return BookDetails.query.order_by(BookDetails.get_average_rating.desc())\
+            .paginate(page=page, per_page=limit, error_out=False).items
         #     join(RatingDetails)\
         # .limit(limit).offset((page - 1) * limit)
         #     # .order_by(desc(RatingDetails.rating_num))\
@@ -394,7 +395,7 @@ class BookDetails(db.Model):
 
     @get_average_rating.expression
     def get_average_rating(cls):
-        return (cls.cnt_5star * 5 + cls.cnt_4star * 4 + cls.cnt_3star * 3 + cls.cnt_2star * 2 + cls.cnt_1) / \
+        return (cls.cnt_5star * 5 + cls.cnt_4star * 4 + cls.cnt_3star * 3 + cls.cnt_2star * 2 + cls.cnt_1star) / \
                (cls.cnt_5star + cls.cnt_4star + cls.cnt_3star + cls.cnt_2star + cls.cnt_1star)
 
 
