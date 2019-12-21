@@ -115,7 +115,7 @@ class BorrowDetails(db.Model):
     @classmethod
     def find_by_owner(cls, owner_id, limit, page):
         return cls.query.join(BookWarehouse).join(BookDetails).join(AuthorDetails) \
-            .filter(UserDetails.user_id == owner_id).order_by(desc('borrow_id')) \
+            .filter(BookWarehouse.owner_id == owner_id).order_by(desc('borrow_id')) \
             .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod

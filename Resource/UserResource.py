@@ -425,17 +425,19 @@ class UserTransactions(Resource):
             res['data']['details'] = []
             borrow_details = BorrowDetails.find_by_owner(current_user[1], data['limit'], data['page'])
             for each_borrow in borrow_details:
+                borrower_details = UserDetails.find_by_id(each_borrow.borrower_id)
                 res['data']['details'].append({
-                    'ISBN': each_borrow.book_details.ISBN,
-                    'book_title': each_borrow.book_details.book_title,
-                    'book_cover': each_borrow.book_details.book_cover,
-                    'author': each_borrow.author_details.author_name,
-                    'day_borrow': each_borrow.day_borrow,
-                    'day_expected_return': each_borrow.day_expected_return,
-                    'day_actual_return': each_borrow.day_actual_return,
+                    'ISBN': each_borrow.book_warehouse.book_details.ISBN,
+                    'book_title': each_borrow.book_warehouse.book_details.book_title,
+                    'book_cover': each_borrow.book_warehouse.book_details.book_cover,
+                    'author': each_borrow.book_warehouse.book_details.author_details.author_name,
+                    'borrower_email': borrower_details.email,
+                    'day_borrow': each_borrow.day_borrow.isoformat() if each_borrow.day_borrow else '',
+                    'day_expected_return': each_borrow.day_expected_return.isoformat() if each_borrow.day_expected_return else None,
+                    'day_actual_return': each_borrow.day_actual_return.isoformat() if each_borrow.day_actual_return else None,
                     'phone': each_borrow.phone,
                     'address': each_borrow.address,
                     'price': each_borrow.price,
-                    'payment_type': each_borrow.payment_type
+                    'status': each_borrow.status
                 })
             return res, 200
