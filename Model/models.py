@@ -406,6 +406,7 @@ class BookDetails(db.Model):
         return (cls.cnt_5star * 5 + cls.cnt_4star * 4 + cls.cnt_3star * 3 + cls.cnt_2star * 2 + cls.cnt_1star) / \
                (cls.cnt_5star + cls.cnt_4star + cls.cnt_3star + cls.cnt_2star + cls.cnt_1star)
 
+
 class BookCategories(db.Model):
     __tablename__ = 'book_categories'
 

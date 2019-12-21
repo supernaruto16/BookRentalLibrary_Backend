@@ -24,11 +24,14 @@ class WarehousesBook(Resource):
         warehouses = book_details.book_warehouse
         res = []
         for warehouse in warehouses:
+            owner_details = UserDetails.find_by_id(warehouse.owner_id)
+            if warehouse.status == 0:
+                continue
             res.append({
                 'warehouse_id': warehouse.warehouse_id,
                 'price': warehouse.price,
                 'borrowed_times': warehouse.borrowed_times,
-                'email': warehouse.email,
+                'email': owner_details.email,
                 'status': warehouse.status,
             })
         return {'data': res}, 200
