@@ -1,4 +1,4 @@
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, case
 from DB_Connection.db import sql_db
 from passlib.hash import pbkdf2_sha256 as sha256
 from Utils.SqlEscape import *
@@ -398,9 +398,13 @@ class BookDetails(db.Model):
 
     @get_average_rating_sql.expression
     def get_average_rating_sql(cls):
+        # return case(
+        #     [(cls.cnt_5star + cls.cnt_4star + cls.cnt_3star + cls.cnt_2star + cls.cnt_1star == 0), 0],
+        #     else_=(cls.cnt_5star * 5 + cls.cnt_4star * 4 + cls.cnt_3star * 3 + cls.cnt_2star * 2 + cls.cnt_1star) /
+        #           (cls.cnt_5star + cls.cnt_4star + cls.cnt_3star + cls.cnt_2star + cls.cnt_1star)
+        # )
         return (cls.cnt_5star * 5 + cls.cnt_4star * 4 + cls.cnt_3star * 3 + cls.cnt_2star * 2 + cls.cnt_1star) / \
                (cls.cnt_5star + cls.cnt_4star + cls.cnt_3star + cls.cnt_2star + cls.cnt_1star)
-
 
 class BookCategories(db.Model):
     __tablename__ = 'book_categories'

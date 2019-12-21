@@ -162,7 +162,10 @@ class RatingsStatBook(Resource):
             total_sum += cnt * i
         res['data']['total_cnt'] = total_cnt
         res['data']['total_sum'] = total_sum
-        res['data']['average_rating'] = round(total_sum / total_cnt, 2)
+        if total_cnt:
+            res['data']['average_rating'] = round(total_sum / total_cnt, 2)
+        else:
+            res['data']['average_rating'] = 0
         return res, 200
 
 
