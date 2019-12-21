@@ -169,9 +169,9 @@ class UserLend(Resource):
 borrow_req = reqparse.RequestParser()
 borrow_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 borrow_req.add_argument('warehouse_id_list', type=validate_warehouse_id_list, required=True, location="json",
-                        default='{"warehouse_id_list": [{"warehouse_id": "", "num_days_borrow": ""}, ]}')
+                        help='{"warehouse_id_list": [{"warehouse_id": "", "num_days_borrow": ""}, ]}')
 borrow_req.add_argument("address", type=str, required=True)
-borrow_req.add_argument("phone", type=str, required=True)
+borrow_req.add_argument("phone", type=validate_phone_number, help='+840123456789', required=True)
 borrow_req.add_argument("payment_type", type=str, required=True, choices=("cash", "paypal"), default='cash')
 
 
@@ -319,7 +319,7 @@ class UserLendings(Resource):
             each_res['warehouse_id'] = each_warehouse['warehouse_id']
             each_res['book_id'] = each_warehouse['book_id']
             each_res['price'] = each_warehouse['price']
-            each_res['time_upload'] = each_warehouse['time_upload'].isoformat() if each_warehouse['time_upload'] else None
+            each_res['time_upload'] = each_warehouse['time_upload']
             each_res['borrowed_times'] = each_warehouse['borrowed_times']
             each_res['status'] = each_warehouse['status']
             each_res['is_validate'] = each_warehouse['is_validate']

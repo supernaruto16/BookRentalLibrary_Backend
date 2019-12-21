@@ -71,7 +71,7 @@ class TopBooks(Resource):
                 'ISBN': x.ISBN,
                 'book_title': x.book_title,
                 'book_cover': x.book_cover,
-                'rating': list(map(lambda rating_ele: rating_ele.rating_num, x.ratings_details))
+                'rating': x.get_average_rating()
             },
                              BookDetails.return_top_books(int(data['limit']),
                                                           int(data['page']))))

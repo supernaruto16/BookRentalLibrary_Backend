@@ -2,6 +2,7 @@ from sqlalchemy import desc, func
 from DB_Connection.db import sql_db
 from passlib.hash import pbkdf2_sha256 as sha256
 from Utils.SqlEscape import *
+from sqlalchemy.ext.hybrid import hybrid_property
 
 db = sql_db()
 
@@ -113,7 +114,7 @@ class BorrowDetails(db.Model):
 
     @classmethod
     def find_by_owner(cls, owner_id, limit, page):
-        return cls.query.join(BookWarehouse).join(UserDetails).join(BookDetails) \
+        return cls.query.join(BookWarehouse).join(BookDetails).join(AuthorDetails) \
             .filter(UserDetails.user_id == owner_id).order_by(desc('borrow_id')) \
             .paginate(page=page, per_page=limit, error_out=False).items
 
@@ -221,7 +222,7 @@ class BookWarehouse(db.Model):
     @classmethod
     def find_by_owner(cls, owner_id, limit, page):
         return {'data': list(map(lambda x: BookWarehouse.as_dict(x),
-                                 cls.query.filter_by(owner_id=owner_id)
+                                 cls.query.filter_by(owner_id=owner_id).order_by(desc('warehouse_id'))
                                  .paginate(page=page, per_page=limit, error_out=False).items))}
 
     @classmethod
@@ -239,7 +240,8 @@ class BookWarehouse(db.Model):
     @classmethod
     def get_new_books(cls, limit, page):
         return {'data': list(map(lambda x: BookWarehouse.as_dict(x),
-                                 cls.query.paginate(page=page, per_page=limit, error_out=False).items))}
+                                 cls.query.order_by(desc('warehouse_id'))
+                                 .paginate(page=page, per_page=limit, error_out=False).items))}
 
 
 class RatingDetails(db.Model):
@@ -358,7 +360,7 @@ class BookDetails(db.Model):
 
     @classmethod
     def return_top_books(cls, limit, page):
-        return BookDetails.query.paginate(page=page, per_page=limit, error_out=False).items
+        return BookDetails.query.orderby().paginate(page=page, per_page=limit, error_out=False).items
         #     join(RatingDetails)\
         # .limit(limit).offset((page - 1) * limit)
         #     # .order_by(desc(RatingDetails.rating_num))\
@@ -381,6 +383,7 @@ class BookDetails(db.Model):
         setattr(self, cnt_new, getattr(self, cnt_new) + 1)
         return True
 
+    @hybrid_property
     def get_average_rating(self):
         total_sum, total_cnt = 0, 0
         for i in range(1, 6):
@@ -388,6 +391,11 @@ class BookDetails(db.Model):
             total_cnt += getattr(self, cnt_rating)
             total_sum += getattr(self, cnt_rating) * i
         return round(total_sum / total_cnt, 2)
+
+    @get_average_rating.expression
+    def get_average_rating(cls):
+        return (cls.cnt_5star * 5 + cls.cnt_4star * 4 + cls.cnt_3star * 3 + cls.cnt_2star * 2 + cls.cnt_1) / \
+               (cls.cnt_5star + cls.cnt_4star + cls.cnt_3star + cls.cnt_2star + cls.cnt_1star)
 
 
 class BookCategories(db.Model):

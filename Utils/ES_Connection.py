@@ -1,7 +1,7 @@
 import requests
 
 
-ES_URL = 'http://127.0.0.1:1910'
+ES_URL = 'http://3.1.80.54:1910'
 
 
 def update_ratings_book(book_id, average_rating):
