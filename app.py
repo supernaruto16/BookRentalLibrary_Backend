@@ -107,7 +107,7 @@ auth_ns.add_resource(UserValidationResource.TokenRefresh, '/token/refresh')
 # admin_ns.add_resource(UserValidationResource.GetAllUsers, '/delallusers')
 
 # ---------------------------BOOKS---------------------------
-books_ns.add_resource(BookResource.NewBook, '/new')
+# books_ns.add_resource(BookResource.NewBook, '/new')
 books_ns.add_resource(BookResource.AllBooksByCategory, '/category')
 books_ns.add_resource(BookResource.TopBooks, '/top')
 books_ns.add_resource(BookResource.DetailsBook, '/details')

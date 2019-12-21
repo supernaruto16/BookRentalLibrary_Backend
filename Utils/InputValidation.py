@@ -62,12 +62,14 @@ def validate_role(email, role):
 
 def validate_phone_number(value):
     schema = {
-        'type': 'string',
-        'regex': '^(\(?\+\d{1,2}\)?\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4,5}$',
-        "required": True,
+        'phone': {
+            'type': 'string',
+            'regex': '^(\(?\+\d{1,2}\)?\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4,5}$'
+        }
     }
     v = Validator(schema)
-    if v.validate(value):
+    wrap_value = {'phone': value}
+    if v.validate(wrap_value):
         return value
     raise ValidationError("Invalid phone number")
 
