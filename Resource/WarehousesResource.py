@@ -29,6 +29,7 @@ class WarehousesBook(Resource):
             res_each['price'] = warehouse.price
             res_each['borrowed_times'] = warehouse.borrowed_times
             res_each['email'] = UserDetails.find_by_id(warehouse.owner_id).email
+            res_each['status'] = warehouse.status
             res.append(res_each)
         return {'data': res}, 200
 

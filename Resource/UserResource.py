@@ -167,7 +167,7 @@ borrow_req.add_argument('warehouse_id_list', type=validate_warehouse_id_list, re
                         default='{"warehouse_id_list": [{"warehouse_id": "", "num_days_borrow": ""}, ]}')
 borrow_req.add_argument("address", type=str, required=True)
 borrow_req.add_argument("phone", type=str, required=True)
-borrow_req.add_argument("payment_type", type=str, required=True, choices=("cash"), default='cash')
+borrow_req.add_argument("payment_type", type=str, required=True, choices=("cash", "paypal"), default='cash')
 
 
 class UserBorrow(Resource):
@@ -222,7 +222,7 @@ class UserBorrow(Resource):
             day_expected_return = day_borrow + datetime.timedelta(days=each_warehouse['num_days_borrow'])
             price = warehouse_details.price * each_warehouse['num_days_borrow']
 
-            borrow_details = BorrowDetails(warehouse_id=data['warehouse_id'],
+            borrow_details = BorrowDetails(warehouse_id=each_warehouse['warehouse_id'],
                                            borrower_id=current_user[1],
                                            day_borrow=day_borrow,
                                            day_expected_return=day_expected_return,
