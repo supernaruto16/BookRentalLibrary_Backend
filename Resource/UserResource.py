@@ -381,6 +381,22 @@ class UserRatings(Resource):
         return RatingDetails.find_by_user(current_user[1], data['limit'], data['page'])
 
 
+ratings_stat_req = reqparse.RequestParser()
+ratings_stat_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
+
+
+class UserRatingsStat(Resource):
+    @jwt_required
+    @api.expect(ratings_stat_req)
+    @api.doc(security='Bearer Auth', authorizations=AuthorizationDoc.authorizations)
+    def get(self):
+        data = ratings_req.parse_args()
+        current_user = get_jwt_identity()
+        return {'data': [
+            {str(i): RatingDetails.find_by_user_and_rating_num(current_user[1], i)} for i in range(1, 6)
+        ]}, 200
+
+
 transactions_req = reqparse.RequestParser()
 transactions_req.add_argument('Authorization', type=str, location='headers', help='Bearer Access Token', required=True)
 transactions_req.add_argument('mode', type=str, choices=('income', 'outcome'), default="outcome", required=True)

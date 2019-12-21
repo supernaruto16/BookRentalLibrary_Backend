@@ -262,6 +262,10 @@ class RatingDetails(db.Model):
                                  .limit(limit).offset((page - 1) * limit)))}
 
     @classmethod
+    def find_by_user_and_rating_num(cls, user_id, rating_num):
+        return cls.query.filter_by(user_id=user_id, rating_num=rating_num).count()
+
+    @classmethod
     def find_by_book(cls, book_id, limit, page):
         return list(map(lambda x: RatingDetails.as_dict(x),
                         cls.query.filter_by(book_id=book_id)
