@@ -123,7 +123,7 @@ categories_ns.add_resource(CategoryResource.PopularCategories, '/popular')
 authors_ns.add_resource(AuthorResource.TopAuthor, '/top')
 
 # --------------------------SEARCH------------------------------------
-search_ns.add_resource(SearchResource.Search, '/')
+# search_ns.add_resource(SearchResource.Search, '/')
 
 # --------------------------WAREHOUSES---------------------------
 warehouses_ns.add_resource(WarehousesResource.WarehousesBook, '/book')

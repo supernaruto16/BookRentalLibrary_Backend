@@ -103,7 +103,7 @@ class BorrowDetails(db.Model):
     @classmethod
     def find_by_borrower(cls, borrower_id, limit, page):
         return cls.query.join(BookWarehouse).join(BookDetails).join(AuthorDetails) \
-            .filter(borrower_id == borrower_id).order_by(desc('borrow_id')) \
+            .filter(BorrowDetails.borrower_id == borrower_id).order_by(desc('borrow_id')) \
             .paginate(page=page, per_page=limit, error_out=False).items
 
     @classmethod
